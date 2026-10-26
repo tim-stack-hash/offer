@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 
@@ -13,6 +14,7 @@ from telegram.ext import (
 	ChatMemberHandler,
 	CommandHandler,
 	ConversationHandler,
+	ContextTypes,
 	MessageHandler,
 	TypeHandler,
 	filters,
@@ -80,6 +82,18 @@ from bot.handlers.support import (
 )
 
 
+LOGGER = logging.getLogger(__name__)
+
+
+async def log_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+	"""Логирует необработанные ошибки обработчиков, чтобы они не терялись молча."""
+	LOGGER.exception(
+		"Unhandled exception while processing update %s",
+		update,
+		exc_info=context.error,
+	)
+
+
 async def set_bot_commands(application: Application) -> None:
 	"""Выполняется при старте приложения: готовит базу, задаёт команды меню и счётчик в профиле."""
 	initialize_user_database()
@@ -95,6 +109,10 @@ async def set_bot_commands(application: Application) -> None:
 
 def main() -> None:
 	"""Читает токен и список администраторов из окружения, регистрирует обработчики и запускает polling."""
+	logging.basicConfig(
+		format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+		level=logging.INFO,
+	)
 	load_dotenv()
 	get_lawyer_reviews_chat_id()
 	get_support_chat_id()
@@ -105,6 +123,7 @@ def main() -> None:
 	parse_admin_user_ids()
 
 	application = Application.builder().token(token).post_init(set_bot_commands).build()
+	application.add_error_handler(log_error)
 	application.add_handler(
 		TypeHandler(Update, require_group_subscription),
 		group=-2,

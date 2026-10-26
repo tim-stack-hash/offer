@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
+
 from telegram import (
 	ChatMemberRestricted,
 	InlineKeyboardButton,
 	InlineKeyboardMarkup,
 	Update,
 )
+from telegram.error import TelegramError
 from telegram.ext import ApplicationHandlerStop, ContextTypes
 
 from bot.config import SUBSCRIPTION_CHAT_ID, SUBSCRIPTION_GROUP_URL
@@ -22,6 +25,8 @@ from bot.content.texts import (
 from bot.database import get_user_language, get_user_phone_number
 from bot.handlers.start import start
 from bot.keyboards import colony_group_keyboard, contact_request_keyboard
+
+LOGGER = logging.getLogger(__name__)
 
 
 def is_language_selection_update(update: Update) -> bool:
@@ -69,7 +74,18 @@ async def is_group_member(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 	if not user:
 		return False
 
-	member = await context.bot.get_chat_member(SUBSCRIPTION_CHAT_ID, user.id)
+	try:
+		member = await context.bot.get_chat_member(SUBSCRIPTION_CHAT_ID, user.id)
+	except TelegramError:
+		# Если бот не может проверить группу (не добавлен в неё, не админ, группа
+		# переименована), не блокируем пользователя — иначе бот молчит после
+		# выбора языка. Проверка подписки возобновится, как только доступ появится.
+		LOGGER.exception(
+			"Cannot check subscription for user %s in %s",
+			user.id,
+			SUBSCRIPTION_CHAT_ID,
+		)
+		return True
 	return _is_member_status(member)
 
 
