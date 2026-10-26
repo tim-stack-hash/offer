@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="color-scheme" content="light">
+	<title>Панель бота</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body>
+	<header class="topbar">
+		<a class="brand" href="{{ url_for('dashboard') }}">Info Bot <span>ADMIN</span></a>
+		<a class="logout" href="{{ url_for('dashboard') }}">Обновить</a>
+	</header>
+	<main class="container">
+		<section class="page-heading">
+			<div>
+				<p class="eyebrow">УПРАВЛЕНИЕ БОТОМ</p>
+				<h1>Панель администратора</h1>
+				<p class="muted">Пользователи, нажатия и история активности</p>
+			</div>
+		</section>
+
+		<section class="metrics" aria-label="Общая статистика">
+			<article class="metric-card">
+				<span>Пользователи</span>
+				<strong>{{ summary.users_count }}</strong>
+			</article>
+			<article class="metric-card">
+				<span>Активные пользователи</span>
+				<strong>{{ summary.active_users }}</strong>
+			</article>
+			<article class="metric-card">
+				<span>Всего нажатий</span>
+				<strong>{{ summary.clicks_count }}</strong>
+			</article>
+		</section>
+
+		<nav class="tabs" aria-label="Разделы панели">
+			<a class="{{ 'selected' if view == 'users' else '' }}" href="{{ url_for('dashboard', view='users') }}">Пользователи</a>
+			<a class="{{ 'selected' if view == 'activity' else '' }}" href="{{ url_for('dashboard', view='activity') }}">Счётчики кнопок</a>
+			<a class="{{ 'selected' if view == 'history' else '' }}" href="{{ url_for('dashboard', view='history') }}">История нажатий</a>
+		</nav>
+
+		<section class="content-card">
+			{% if view == 'users' %}
+				<div class="section-heading">
+					<div>
+						<h2>Пользователи</h2>
+						<p class="muted">Найдено: {{ total }}</p>
+					</div>
+					<a class="button secondary" href="{{ url_for('export_users') }}">Скачать CSV</a>
+				</div>
+				<form class="search-form" method="get" action="{{ url_for('dashboard') }}">
+					<input type="hidden" name="view" value="users">
+					<label class="sr-only" for="user-search">Поиск пользователей</label>
+					<input id="user-search" name="q" value="{{ search }}" placeholder="Имя, username, телефон или Telegram ID">
+					<button class="button primary" type="submit">Найти</button>
+				</form>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr><th>Пользователь</th><th>Telegram ID</th><th>Телефон</th><th>Нажатия</th><th>Последняя активность</th></tr>
+						</thead>
+						<tbody>
+							{% for row in rows %}
+								<tr>
+									<td><strong>{{ row.first_name }} {{ row.last_name }}</strong>{% if row.username %}<small>@{{ row.username }}</small>{% endif %}</td>
+									<td class="mono">{{ row.user_id }}</td>
+									<td>{{ row.phone_number or '—' }}</td>
+									<td>{{ row.click_count }}</td>
+									<td>{{ row.last_clicked_at or '—' }}</td>
+								</tr>
+							{% else %}
+								<tr><td class="empty" colspan="5">Пользователи не найдены.</td></tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			{% elif view == 'activity' %}
+				<div class="section-heading">
+					<div>
+						<h2>Счётчики кнопок</h2>
+						<p class="muted">Сводка нажатий по всем пользователям</p>
+					</div>
+					<a class="button secondary" href="{{ url_for('export_activity') }}">Скачать CSV</a>
+				</div>
+				<div class="table-wrap">
+					<table>
+						<thead><tr><th>Кнопка / действие</th><th>Нажатия</th><th>Пользователи</th><th>Последнее нажатие</th></tr></thead>
+						<tbody>
+							{% for row in rows %}
+								<tr><td><strong>{{ row.action }}</strong></td><td>{{ row.clicks }}</td><td>{{ row.users }}</td><td>{{ row.last_clicked_at or '—' }}</td></tr>
+							{% else %}
+								<tr><td class="empty" colspan="4">Пока нет зарегистрированных нажатий.</td></tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			{% else %}
+				<div class="section-heading">
+					<div>
+						<h2>История нажатий</h2>
+						<p class="muted">Каждое зарегистрированное действие — отдельная строка. Время указано по UTC+05:00.</p>
+					</div>
+					<a class="button secondary" href="{{ url_for('export_history') }}">Скачать CSV</a>
+				</div>
+				<form class="search-form" method="get" action="{{ url_for('dashboard') }}">
+					<input type="hidden" name="view" value="history">
+					<label class="sr-only" for="history-search">Поиск в истории</label>
+					<input id="history-search" name="q" value="{{ search }}" placeholder="Пользователь, телефон, ID или кнопка">
+					<button class="button primary" type="submit">Найти</button>
+				</form>
+				<div class="table-wrap">
+					<table>
+						<thead><tr><th>Дата и время</th><th>Пользователь</th><th>Telegram ID</th><th>Телефон</th><th>Кнопка / действие</th></tr></thead>
+						<tbody>
+							{% for row in rows %}
+								<tr><td>{{ row.clicked_at }}</td><td><strong>{{ row.name or '—' }}</strong>{% if row.username %}<small>@{{ row.username }}</small>{% endif %}</td><td class="mono">{{ row.user_id }}</td><td>{{ row.phone_number or '—' }}</td><td>{{ row.action }}</td></tr>
+							{% else %}
+								<tr><td class="empty" colspan="5">События не найдены.</td></tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			{% endif %}
+
+			{% if view != 'activity' and page_count > 1 %}
+				<div class="pagination">
+					<span>Страница {{ page }} из {{ page_count }} · записей: {{ total }}</span>
+					<div>
+						{% if page > 1 %}<a class="button secondary" href="{{ url_for('dashboard', view=view, q=search, page=page - 1) }}">Назад</a>{% endif %}
+						{% if page < page_count %}<a class="button secondary" href="{{ url_for('dashboard', view=view, q=search, page=page + 1) }}">Дальше</a>{% endif %}
+					</div>
+				</div>
+			{% elif view != 'activity' %}
+				<p class="pagination-note">Записей: {{ total }}</p>
+			{% endif %}
+		</section>
+		<p class="footnote">Доступ к этой панели и CSV-файлам защищён паролем.</p>
+	</main>
+</body>
+</html>

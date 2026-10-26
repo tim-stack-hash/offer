@@ -1,0 +1,5 @@
+bot_users.sqlite3
+.venv
+/.venv-1
+.env
+__pycache__/
