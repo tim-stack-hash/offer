@@ -77,15 +77,12 @@ async def is_group_member(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 	try:
 		member = await context.bot.get_chat_member(SUBSCRIPTION_CHAT_ID, user.id)
 	except TelegramError:
-		# Если бот не может проверить группу (не добавлен в неё, не админ, группа
-		# переименована), не блокируем пользователя — иначе бот молчит после
-		# выбора языка. Проверка подписки возобновится, как только доступ появится.
 		LOGGER.exception(
 			"Cannot check subscription for user %s in %s",
 			user.id,
 			SUBSCRIPTION_CHAT_ID,
 		)
-		return True
+		return False
 	return _is_member_status(member)
 
 

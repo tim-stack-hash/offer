@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from contextlib import ExitStack
 
@@ -138,8 +139,16 @@ async def handle_location_button(update: Update, context: ContextTypes.DEFAULT_T
 				language,
 				ADDITIONAL_INFO_INTRO_IMAGE_PATHS["ru"],
 			)
-			with open(intro_image_path, "rb") as intro_image:
-				await message.reply_photo(photo=intro_image)
+			if os.path.exists(intro_image_path):
+				with open(intro_image_path, "rb") as intro_image:
+					await message.reply_photo(photo=intro_image)
+			else:
+				await message.reply_text(
+					ADDITIONAL_INFO_IMAGE_MISSING_TEXTS.get(
+						language,
+						ADDITIONAL_INFO_IMAGE_MISSING_TEXTS["ru"],
+					)
+				)
 		except OSError:
 			await message.reply_text(
 				ADDITIONAL_INFO_IMAGE_MISSING_TEXTS.get(
@@ -160,16 +169,26 @@ async def handle_location_button(update: Update, context: ContextTypes.DEFAULT_T
 			)
 		)
 		try:
+			image_paths = [
+				*COLONY_REGIME_IMAGE_PATHS.get(
+					language,
+					COLONY_REGIME_IMAGE_PATHS["ru"],
+				),
+				*ADDITIONAL_INFO_IMAGE_PATHS,
+			]
+			existing_paths = [path for path in image_paths if os.path.exists(path)]
+			if not existing_paths:
+				await message.reply_text(
+					ADDITIONAL_INFO_IMAGE_MISSING_TEXTS.get(
+						language,
+						ADDITIONAL_INFO_IMAGE_MISSING_TEXTS["ru"],
+					)
+				)
+				return
 			with ExitStack() as image_stack:
 				media = [
 					InputMediaPhoto(media=image_stack.enter_context(open(image_path, "rb")))
-					for image_path in (
-						*COLONY_REGIME_IMAGE_PATHS.get(
-							language,
-							COLONY_REGIME_IMAGE_PATHS["ru"],
-						),
-						*ADDITIONAL_INFO_IMAGE_PATHS,
-					)
+					for image_path in existing_paths
 				]
 				await message.reply_media_group(media=media)
 		except OSError:

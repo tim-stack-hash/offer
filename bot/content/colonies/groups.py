@@ -47,12 +47,23 @@ COLONY_COORDINATES = {
 
 # Telegram-юзернейм группы каждой колонии.
 COLONY_GROUP_LINKS = {
-	"SmartJIEK1": "+o07ndNymH6s5NDk6", "SmartJIEK2": "+pv27Oylz955jZGJi", "SmartJIEK3": "+ddnR-wyN2D4wNjA6",
-	"SmartJIEK4": "+x800U7xcHTM4MDIy", "SmartJIEK5": "+9noWYiYeaP45NGYy", "SmartJIEK6": "+nzcIDrrfrhBkMDNi",
-	"SmartJIEK7": "+j2vg8ot2ico4MmZi", "SmartJIEK10": "+_DkMf39eHeU0ODgy", "SmartJIEK11": "+W7BGChmHUNk2MmQy",
-	"SmartJIEK12": "+U-dkFHOB5T43NjEy", "SmartJIEK13": "+WaapYHRcuew4MzVi", "SmartJIEK14": "+M8DMfUWdz6FlNDYy",
-	"SmartJIEK17": "+DC6KzwRWLwc5NjFi", "SmartJIEK20": "SmartJIEK20", "SmartJIEK21": "+bFZu_a5ieAg4MDNi",
-	"SmartJIEK22": "+cuiSs7a0sK0zNmI6", "SmartJIEK23": "+EcBrwgrkdwQ3YTQy",
+	"SmartJIEK1": "+o07ndNymH6s5NDk6",
+	"SmartJIEK2": "+jQHraDL7c8UzYWNi",
+	"SmartJIEK3": "+h_ugmMUpVLw1YjBi",
+	"SmartJIEK4": "+x800U7xcHTM4MDIy",
+	"SmartJIEK5": "+6y6NeG6GO6kwMWEy",
+	"SmartJIEK6": "+nzcIDrrfrhBkMDNi",
+	"SmartJIEK7": "+j2vg8ot2ico4MmZi",
+	"SmartJIEK10": "+y4sXQ3_7ogMwOTQy",
+	"SmartJIEK11": "+lnKbPXFCVtQ4ODBi",
+	"SmartJIEK12": "+NOryJ71oF01lMjQy",
+	"SmartJIEK13": "+WaapYHRcuew4MzVi",
+	"SmartJIEK14": "+oeAt56EitMgwZjli",
+	"SmartJIEK17": "+Aa5Ud7pyZExiMzZi",
+	"SmartJIEK20": "SmartJIEK20",
+	"SmartJIEK21": "+bFZu_a5ieAg4MDNi",
+	"SmartJIEK22": "+cuiSs7a0sK0zNmI6",
+	"SmartJIEK23": "+EcBrwgrkdwQ3YTQy",
 }
 
 # Порядок колоний — индекс в этом кортеже используется в callback_data кнопок выбора.
