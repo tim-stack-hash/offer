@@ -60,8 +60,8 @@ ADDITIONAL_INFO_IMAGE_PATHS = (
 )
 
 # Группа, в которую пользователь должен вступить для работы с ботом.
-SUBSCRIPTION_CHAT_ID = "+rv5FeUl1pf9jZDcy"
-SUBSCRIPTION_GROUP_URL = "https://t.me/+rv5FeUl1pf9jZDcy"
+SUBSCRIPTION_CHAT_ID = "@smartdunyopaygroup"
+SUBSCRIPTION_GROUP_URL = "https://t.me/smartdunyopaygroup"
 
 # Медиа с инструкциями по переводу денег.
 MONEY_TRANSFER_MEDIA_PATHS = (
