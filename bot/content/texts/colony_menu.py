@@ -48,7 +48,7 @@ COLONY_GROUP_MISSING_TEXTS = {
 # Подпись кнопки «Основная группа».
 MAIN_GROUP_BUTTONS = {
 	"ru":     "💬 Группа проверки денег",
-	"uz":     "💬 Pul tushumlari guruhi   ",
+	"uz":     "💬 Pul tushumlari guruhi",
 	"uz_cyr": "💬 Пул тушумлари гурухи",
 }
 
@@ -129,11 +129,8 @@ COLONY_ACTION_SUFFIXES = {
 }
 
 
-def colony_action_button_texts(language, colony_name) -> tuple[str, str, str]:
-	"""Формирует подписи кнопок «локация/справочник/заявления» с номером конкретной колонии."""
-	colony_name = colony_name.removeprefix("📍").replace("🏥 ", "").strip().removesuffix(")").strip()
-	colony_number = re.search(r"\d+", colony_name)
-	colony_label = f"{colony_number.group()}-сон" if colony_number else colony_name
+def colony_action_button_texts(language: str) -> tuple[str, str, str]:
+	"""Подписи кнопок «локация / справочник / заявления» в меню колонии."""
 	location_suffix, directory_suffix, application_suffix = COLONY_ACTION_SUFFIXES.get(
 		language,
 		COLONY_ACTION_SUFFIXES["ru"],

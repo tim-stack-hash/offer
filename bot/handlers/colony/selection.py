@@ -13,6 +13,7 @@ from bot.content.texts import (
 	LOCATION_MISSING_TEXTS,
 	colony_location_prompt,
 )
+from bot.handlers.common import user_language
 from bot.keyboards import (
 	colony_group_keyboard,
 	colony_location_reply_keyboard,
@@ -26,7 +27,7 @@ async def handle_colony_selection(update: Update, context: ContextTypes.DEFAULT_
 	if not query or not query.data:
 		return
 
-	language = context.user_data.get("language", "ru")
+	language = user_language(context)
 	if query.data == "colonies:open":
 		await query.answer()
 		if query.message:

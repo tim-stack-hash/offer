@@ -7,25 +7,21 @@ from telegram.ext import ContextTypes
 
 from bot.content.clothing_regions import CLOTHING_REGIONS
 from bot.content.texts import (
-	CLOTHING_BUTTONS,
 	CLOTHING_REGION_NOT_FOUND_TEXTS,
 	CLOTHING_REGION_PROMPTS,
 	CLOTHING_SELLER_PROMPTS,
 )
+from bot.handlers.common import user_language
 from bot.keyboards import clothing_regions_keyboard, clothing_sellers_keyboard
 
 
 async def handle_clothing_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 	"""Открывает выбор региона при нажатии кнопки «Одежда»."""
 	message = update.message
-	if not message or not message.text:
+	if not message:
 		return
 
-	language = context.user_data.get("language", "ru")
-	button_text = CLOTHING_BUTTONS.get(language, CLOTHING_BUTTONS["ru"])
-	if message.text.strip() != button_text:
-		return
-
+	language = user_language(context)
 	context.user_data.pop("clothing_region", None)
 	await message.reply_text(
 		CLOTHING_REGION_PROMPTS.get(language, CLOTHING_REGION_PROMPTS["ru"]),
@@ -39,7 +35,7 @@ async def handle_clothing_region(update: Update, context: ContextTypes.DEFAULT_T
 	if not query or not query.data:
 		return
 
-	language = context.user_data.get("language", "ru")
+	language = user_language(context)
 	region_id = query.data.removeprefix("clothing:region:")
 	region_names = CLOTHING_REGIONS.get(region_id)
 	if not region_names:

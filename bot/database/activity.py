@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import csv
 import io
-import sqlite3
-from contextlib import closing
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
-from bot.config import USER_DATABASE_PATH
+from bot.config import LOCAL_TIMEZONE
+from bot.database.connection import connect
 from bot.database.users import csv_safe_cell
 
-LOCAL_TIMEZONE = timezone(timedelta(hours=5))
 RUSSIAN_MONTHS = (
 	"января",
 	"февраля",
@@ -46,7 +44,7 @@ def format_click_time(timestamp: str | None) -> str:
 def record_user_action(user_id: int, action: str) -> int:
 	"""Сохраняет нажатие и возвращает общее число действий пользователя."""
 	clicked_at = datetime.now(LOCAL_TIMEZONE).isoformat(timespec="seconds")
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			connection.execute(
 				"""
@@ -77,7 +75,7 @@ def record_user_action(user_id: int, action: str) -> int:
 
 def get_activity_summary() -> tuple[int, int, list[tuple[str, int]]]:
 	"""Возвращает число отслеживаемых пользователей, кликов и популярные кнопки."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			users_count, clicks_count = connection.execute(
 				"""
@@ -99,7 +97,7 @@ def get_activity_summary() -> tuple[int, int, list[tuple[str, int]]]:
 
 def export_user_activity_csv() -> io.BytesIO:
 	"""Формирует сводный CSV со счётчиком и временем последнего нажатия каждой кнопки."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			rows = connection.execute(
 				"""
@@ -147,7 +145,7 @@ def export_user_activity_csv() -> io.BytesIO:
 
 def export_user_activity_history_csv() -> io.BytesIO:
 	"""Формирует CSV с отдельной строкой для каждого нажатия пользователем кнопки."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			rows = connection.execute(
 				"""

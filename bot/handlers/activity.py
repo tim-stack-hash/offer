@@ -2,79 +2,30 @@
 
 from __future__ import annotations
 
+import logging
+
 from telegram import Update
+from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from bot.content.clothing_regions import CLOTHING_REGIONS
+from bot.content.colonies import COLONY_GROUP_LABELS
 from bot.content.lawyer_regions import LAWYER_REGIONS
 from bot.content.lawyers import LAWYERS
-from bot.content.colonies import COLONY_GROUP_LABELS
 from bot.content.texts import (
-	ADDITIONAL_INFO_BUTTONS,
-	CHANGE_COLONY_BUTTONS,
-	CHANGE_LANGUAGE_BUTTONS,
-	CLOTHING_BUTTONS,
-	COLONY_APPLICATION_BUTTONS,
-	COLONY_DIRECTORY_BUTTONS,
-	COLONY_GROUP_BUTTONS,
-	COLONY_LOCATION_BUTTONS,
 	APPLICATION_TYPE_BUTTONS,
-	FEEDBACK_BUTTON_TEXT,
-	FEEDBACK_CATEGORY_BUTTONS,
-	LANGUAGE_BUTTONS,
 	LAWYER_ACTION_BUTTONS,
 	LAWYER_REVIEW_MENU_BUTTONS,
-	MAIN_GROUP_BUTTONS,
-	SUPPORT_CANCEL_BUTTONS,
-	colony_action_button_texts,
 )
 from bot.database import record_user_action
+from bot.handlers.common import user_language
 from bot.handlers.money_transfer import (
 	MONEY_TRANSFER_ACTION_THRESHOLD,
 	send_money_transfer_prompt,
 )
+from bot.handlers.patterns import BUTTON_LABELS
 
-
-def _button_labels() -> set[str]:
-	"""Собирает подписи reply-кнопок, чтобы не сохранять обычные сообщения пользователей."""
-	labels = {
-		"/start",
-		"/menu",
-		"O'zbekcha",
-		"Русский",
-		"Узбекча",
-	}
-	labels.update(label for label, _ in LANGUAGE_BUTTONS)
-	for language in ("ru", "uz", "uz_cyr"):
-		for mapping in (
-			ADDITIONAL_INFO_BUTTONS,
-			CHANGE_COLONY_BUTTONS,
-			CHANGE_LANGUAGE_BUTTONS,
-			CLOTHING_BUTTONS,
-			COLONY_APPLICATION_BUTTONS,
-			COLONY_DIRECTORY_BUTTONS,
-			COLONY_GROUP_BUTTONS,
-			COLONY_LOCATION_BUTTONS,
-			MAIN_GROUP_BUTTONS,
-		):
-			labels.add(mapping[language])
-		labels.add(FEEDBACK_BUTTON_TEXT[language])
-		labels.update(FEEDBACK_CATEGORY_BUTTONS[language])
-		labels.add(SUPPORT_CANCEL_BUTTONS[language])
-		labels.update(colony_action_button_texts(language, ""))
-		labels.update(
-			region.get(language, region["ru"])
-			for region in CLOTHING_REGIONS.values()
-		)
-		labels.update(
-			region.get(language, region["ru"])
-			for region in LAWYER_REGIONS.values()
-		)
-		labels.update(COLONY_GROUP_LABELS[language])
-	return labels
-
-
-BUTTON_LABELS = _button_labels()
+LOGGER = logging.getLogger(__name__)
 
 
 def _callback_action(callback_data: str, language: str) -> str:
@@ -137,7 +88,8 @@ def _callback_action(callback_data: str, language: str) -> str:
 async def track_user_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 	"""Записывает нажатие известной кнопки или команды, не сохраняя свободный текст."""
 	user = update.effective_user
-	if not user:
+	chat = update.effective_chat
+	if not user or user.is_bot or not chat or chat.type != "private":
 		return
 	if (
 		update.callback_query
@@ -146,7 +98,7 @@ async def track_user_action(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 	):
 		return
 
-	language = context.user_data.get("language", "ru")
+	language = user_language(context)
 	if update.callback_query and update.callback_query.data:
 		action = _callback_action(update.callback_query.data, language)
 	elif update.message and update.message.contact:
@@ -162,8 +114,7 @@ async def track_user_action(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 	action_count = record_user_action(user.id, action)
 	if action_count % MONEY_TRANSFER_ACTION_THRESHOLD == 0:
-		await send_money_transfer_prompt(
-			context.bot,
-			user.id,
-			language,
-		)
+		try:
+			await send_money_transfer_prompt(context.bot, user.id, language)
+		except TelegramError:
+			LOGGER.warning("Could not send money-transfer prompt to user %s", user.id, exc_info=True)

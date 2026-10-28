@@ -13,7 +13,6 @@ from bot.config import get_lawyer_reviews_chat_id
 from bot.content.lawyer_regions import LAWYER_REGIONS
 from bot.content.lawyers import LAWYERS
 from bot.content.texts import (
-	ADDITIONAL_INFO_BUTTONS,
 	LAWYER_LIST_EMPTY_TEXTS,
 	LAWYER_PROFILE_CAPTIONS,
 	LAWYER_PROMPTS,
@@ -21,7 +20,6 @@ from bot.content.texts import (
 	LAWYER_REVIEW_EMPTY_TEXTS,
 	LAWYER_REVIEW_AUTHOR_LABELS,
 	LAWYER_REVIEW_LIST_HEADERS,
-	LAWYER_REVIEW_MENU_BUTTONS,
 	LAWYER_REVIEW_MENU_PROMPTS,
 	LAWYER_REVIEW_PROMPTS,
 	LAWYER_REVIEW_PUBLISH_ERROR_TEXTS,
@@ -37,6 +35,8 @@ from bot.database import (
 	get_lawyer_reviews,
 	save_lawyer_review,
 )
+from bot.handlers.common import telegram_text_length, user_language
+from bot.handlers.patterns import BUTTON_LABELS
 from bot.keyboards import (
 	lawyer_profile_keyboard,
 	lawyer_review_menu_keyboard,
@@ -44,14 +44,9 @@ from bot.keyboards import (
 	lawyers_by_region_keyboard,
 )
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 MAX_LAWYER_REVIEW_LENGTH = 3000
 MAX_TELEGRAM_MESSAGE_LENGTH = 4096
-
-
-def _telegram_text_length(text: str) -> int:
-	"""Returns Telegram's UTF-16-based text length."""
-	return len(text.encode("utf-16-le")) // 2
 
 
 async def handle_lawyer_region(
@@ -69,7 +64,7 @@ async def handle_lawyer_region(
 		return
 
 	_, action, item_id = parts
-	language = context.user_data.get("language", "ru")
+	language = user_language(context)
 	message = query.message
 
 	if action == "region":
@@ -123,7 +118,7 @@ async def handle_lawyer_region(
 		try:
 			review_count = get_lawyer_review_count(item_id)
 		except sqlite3.Error:
-			logger.exception("Could not count reviews for lawyer %s", item_id)
+			LOGGER.exception("Could not count reviews for lawyer %s", item_id)
 			await message.reply_text(
 				LAWYER_REVIEW_READ_ERROR_TEXTS.get(
 					language,
@@ -148,7 +143,7 @@ async def handle_lawyer_region(
 					reply_markup=lawyer_profile_keyboard(language, item_id),
 				)
 		except OSError:
-			logger.exception("Could not read lawyer profile photo: %s", lawyer["photo_path"])
+			LOGGER.exception("Could not read lawyer profile photo: %s", lawyer["photo_path"])
 			await message.reply_text(
 				f"{caption}\n\nФото адвоката временно недоступно.",
 				reply_markup=lawyer_profile_keyboard(language, item_id),
@@ -211,7 +206,7 @@ async def handle_lawyer_region(
 		try:
 			reviews = get_lawyer_reviews(item_id)
 		except sqlite3.Error:
-			logger.exception("Could not read reviews for lawyer %s", item_id)
+			LOGGER.exception("Could not read reviews for lawyer %s", item_id)
 			await message.reply_text(
 				LAWYER_REVIEW_READ_ERROR_TEXTS.get(
 					language,
@@ -243,8 +238,8 @@ async def handle_lawyer_region(
 				f"👤 {author_label}: {author}\n{review_text}"
 			)
 			if (
-				_telegram_text_length(current_text)
-				+ _telegram_text_length(review_block)
+				telegram_text_length(current_text)
+				+ telegram_text_length(review_block)
 				> MAX_TELEGRAM_MESSAGE_LENGTH
 			):
 				await message.reply_text(current_text)
@@ -262,17 +257,10 @@ async def handle_lawyer_button(
 ) -> None:
 	"""Открывает список регионов при нажатии кнопки «Адвокаты»."""
 	message = update.message
-	if not message or not message.text:
+	if not message:
 		return
 
-	language = context.user_data.get("language", "ru")
-	buttons = ADDITIONAL_INFO_BUTTONS.get(
-		language,
-		ADDITIONAL_INFO_BUTTONS["ru"],
-	)
-	if message.text.strip() != buttons[3]:
-		return
-
+	language = user_language(context)
 	context.user_data.pop("lawyer_region", None)
 	context.user_data.pop("lawyer_id", None)
 	context.user_data.pop("pending_lawyer_review", None)
@@ -292,8 +280,13 @@ async def handle_lawyer_review_text(
 	if not lawyer_id or not message or not message.text:
 		return False
 
-	language = context.user_data.get("language", "ru")
 	review_text = message.text.strip()
+	if review_text in BUTTON_LABELS:
+		# Пользователь передумал и нажал кнопку меню — это не текст отзыва.
+		context.user_data.pop("pending_lawyer_review", None)
+		return False
+
+	language = user_language(context)
 	lawyer = LAWYERS.get(lawyer_id)
 	if not lawyer:
 		context.user_data.pop("pending_lawyer_review", None)
@@ -308,7 +301,7 @@ async def handle_lawyer_review_text(
 			).format(name=lawyer["name"])
 		)
 		return True
-	if _telegram_text_length(review_text) > MAX_LAWYER_REVIEW_LENGTH:
+	if telegram_text_length(review_text) > MAX_LAWYER_REVIEW_LENGTH:
 		await message.reply_text(
 			LAWYER_REVIEW_TOO_LONG_TEXTS.get(
 				language,
@@ -324,7 +317,7 @@ async def handle_lawyer_review_text(
 	try:
 		save_lawyer_review(lawyer_id, user.id, review_text)
 	except sqlite3.Error:
-		logger.exception("Could not save review for lawyer %s", lawyer_id)
+		LOGGER.exception("Could not save review for lawyer %s", lawyer_id)
 		await message.reply_text(
 			LAWYER_REVIEW_SAVE_ERROR_TEXTS.get(
 				language,
@@ -350,7 +343,7 @@ async def handle_lawyer_review_text(
 			text=channel_text,
 		)
 	except TelegramError:
-		logger.exception(
+		LOGGER.exception(
 			"Could not publish review for lawyer %s to channel %s",
 			lawyer_id,
 			channel_id,

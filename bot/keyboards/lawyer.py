@@ -43,7 +43,6 @@ def lawyers_by_region_keyboard(region_id: str) -> InlineKeyboardMarkup:
 
 def lawyer_profile_keyboard(language: str, lawyer_id: str) -> InlineKeyboardMarkup:
 	"""Кнопки перехода к отзывам и вызова выбранного адвоката."""
-	lawyer = LAWYERS[lawyer_id]
 	reviews_text, call_text = LAWYER_ACTION_BUTTONS.get(
 		language,
 		LAWYER_ACTION_BUTTONS["ru"],

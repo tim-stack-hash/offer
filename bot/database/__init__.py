@@ -1,4 +1,4 @@
-"""Публичный интерфейс пакета: хранилище пользователей и счётчик в профиле бота."""
+"""Публичный интерфейс пакета: хранилище пользователей, активности, отзывов и обращений."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from bot.database.activity import (
 	get_activity_summary,
 	record_user_action,
 )
-from bot.database.profile import profile_description_lock, update_profile_user_count
 from bot.database.lawyer_reviews import (
 	get_lawyer_review_count,
 	get_lawyer_reviews,
@@ -50,7 +49,6 @@ __all__ = [
 	"get_user_phone_number",
 	"get_support_message_recipient",
 	"initialize_user_database",
-	"profile_description_lock",
 	"register_user",
 	"register_support_message",
 	"record_user_action",
@@ -58,5 +56,4 @@ __all__ = [
 	"save_user_language",
 	"save_cached_media_file_id",
 	"save_lawyer_review",
-	"update_profile_user_count",
 ]

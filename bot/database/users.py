@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import csv
 import io
-import sqlite3
-from contextlib import closing
 
-from bot.config import USER_DATABASE_PATH
+from bot.database.connection import connect, prepare_database_file
 
 
 def initialize_user_database() -> None:
 	"""Создаёт таблицу users при первом запуске и добавляет недостающие колонки при обновлении схемы."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	prepare_database_file()
+	with connect() as connection:
 		with connection:
 			connection.execute(
 				"""
@@ -118,7 +117,7 @@ def register_user(
 	last_name: str | None,
 ) -> bool:
 	"""Добавляет нового пользователя (или обновляет его данные) и возвращает True, если пользователь новый."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			cursor = connection.execute(
 				"""
@@ -141,7 +140,7 @@ def register_user(
 
 def save_user_phone_number(user_id: int, phone_number: str) -> None:
 	"""Сохраняет номер телефона, присланный пользователем, в базе."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			connection.execute(
 				"""
@@ -155,7 +154,7 @@ def save_user_phone_number(user_id: int, phone_number: str) -> None:
 
 def get_user_phone_number(user_id: int) -> str | None:
 	"""Возвращает сохранённый номер телефона пользователя, если он есть."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			row = connection.execute(
 				"SELECT phone_number FROM users WHERE user_id = ?",
@@ -166,7 +165,7 @@ def get_user_phone_number(user_id: int) -> str | None:
 
 def get_user_language(user_id: int) -> str | None:
 	"""Возвращает сохранённый язык интерфейса пользователя, если он есть."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			row = connection.execute(
 				"SELECT language FROM users WHERE user_id = ?",
@@ -177,7 +176,7 @@ def get_user_language(user_id: int) -> str | None:
 
 def save_user_language(user_id: int, language: str) -> None:
 	"""Сохраняет выбранный пользователем язык интерфейса."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			connection.execute(
 				"""
@@ -191,7 +190,7 @@ def save_user_language(user_id: int, language: str) -> None:
 
 def get_registered_users() -> list[tuple[int, str]]:
 	"""Возвращает Telegram ID и язык всех зарегистрированных пользователей."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			rows = connection.execute(
 				"SELECT user_id, language FROM users ORDER BY user_id"
@@ -201,7 +200,7 @@ def get_registered_users() -> list[tuple[int, str]]:
 
 def get_cached_media_file_id(media_key: str, file_size: int) -> str | None:
 	"""Возвращает сохранённый Telegram file_id, если исходный файл не менялся."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			row = connection.execute(
 				"""
@@ -220,7 +219,7 @@ def save_cached_media_file_id(
 	file_id: str,
 ) -> None:
 	"""Сохраняет Telegram file_id, чтобы повторно не загружать файл."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			connection.execute(
 				"""
@@ -236,7 +235,7 @@ def save_cached_media_file_id(
 
 def delete_cached_media_file_id(media_key: str) -> None:
 	"""Удаляет недействительный Telegram file_id."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			connection.execute(
 				"DELETE FROM bot_media_files WHERE media_key = ?",
@@ -246,7 +245,7 @@ def delete_cached_media_file_id(media_key: str) -> None:
 
 def get_user_count() -> int:
 	"""Возвращает общее количество зарегистрированных пользователей."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			return connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]
 
@@ -261,7 +260,7 @@ def csv_safe_cell(value: str | None) -> str:
 
 def export_users_csv() -> io.BytesIO:
 	"""Формирует CSV-файл со всеми пользователями (ID, username, имя, фамилия, телефон)."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			users = connection.execute(
 				"""

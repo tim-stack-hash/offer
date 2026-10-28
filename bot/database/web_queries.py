@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-import sqlite3
-from contextlib import closing
 
-from bot.config import USER_DATABASE_PATH
+from bot.database.connection import connect
 from bot.database.activity import format_click_time
 
 
 def get_web_dashboard_summary() -> dict[str, int]:
 	"""Returns totals for users and recorded button clicks."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		users_count = connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]
 		active_users, clicks_count = connection.execute(
 			"""
@@ -28,7 +26,7 @@ def get_web_dashboard_summary() -> dict[str, int]:
 
 def get_web_activity_counts() -> list[dict[str, int | str]]:
 	"""Returns global counts and latest click time for every recorded button."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		rows = connection.execute(
 			"""
 			SELECT
@@ -67,7 +65,7 @@ def get_web_users(
 			OR COALESCE(users.phone_number, '') LIKE ?)
 	"""
 	parameters = (search, search_pattern, search_pattern, search_pattern, search_pattern, search_pattern)
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		total = connection.execute(
 			f"SELECT COUNT(*) FROM users WHERE {search_filter}",
 			parameters,
@@ -140,7 +138,7 @@ def get_web_click_history(
 		search_pattern,
 		search_pattern,
 	)
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		total = connection.execute(
 			f"""
 			SELECT COUNT(*)

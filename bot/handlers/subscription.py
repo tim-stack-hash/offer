@@ -1,110 +1,121 @@
-"""Проверка подписки пользователя на группу перед обработкой личных сообщений."""
+"""Промежуточные обработчики личных сообщений: контекст пользователя и обязательная подписка."""
 
 from __future__ import annotations
 
 import logging
 
-from telegram import (
-	ChatMemberRestricted,
-	InlineKeyboardButton,
-	InlineKeyboardMarkup,
-	Update,
-)
-from telegram.error import TelegramError
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import Forbidden, TelegramError
 from telegram.ext import ApplicationHandlerStop, ContextTypes
 
-from bot.config import SUBSCRIPTION_CHAT_ID, SUBSCRIPTION_GROUP_URL
+from bot.config import SUBSCRIPTION_GROUP_URL
 from bot.content.texts import (
 	COLONY_PROMPTS,
-	LANGUAGE_BUTTONS,
 	PHONE_PROMPTS,
 	SUBSCRIPTION_BUTTONS,
 	SUBSCRIPTION_PROMPTS,
 	SUBSCRIPTION_WELCOME_TEXTS,
 )
 from bot.database import get_user_language, get_user_phone_number
+from bot.handlers.common import user_language
+from bot.handlers.patterns import LANGUAGE_LABELS
 from bot.handlers.start import start
 from bot.keyboards import colony_group_keyboard, contact_request_keyboard
+from bot.services.subscription import (
+	check_membership,
+	is_member_status,
+	is_subscription_chat,
+	remember_membership,
+)
 
 LOGGER = logging.getLogger(__name__)
 
 
+def _is_private_user_update(update: Update) -> bool:
+	user = update.effective_user
+	chat = update.effective_chat
+	return bool(user and not user.is_bot and chat and chat.type == "private")
+
+
+async def load_user_context(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+	"""Подтягивает язык и телефон пользователя из базы, если их нет в памяти бота."""
+	if not _is_private_user_update(update):
+		return
+
+	user_data = context.user_data
+	user_id = update.effective_user.id
+	if "language" not in user_data:
+		language = get_user_language(user_id)
+		if language:
+			user_data["language"] = language
+	if "phone_number" not in user_data:
+		phone_number = get_user_phone_number(user_id)
+		if phone_number:
+			user_data["phone_number"] = phone_number
+
+
 def is_language_selection_update(update: Update) -> bool:
-	"""Проверяет, что пользователь запускает бота или выбирает язык."""
+	"""Пользователь запускает бота или выбирает язык — это разрешено без подписки."""
 	message = update.message
 	if not message or not message.text:
 		return False
 
 	text = message.text.strip()
-	if text.split(maxsplit=1)[0].split("@", 1)[0] == "/start":
-		return True
-
-	language_labels = {label for label, _ in LANGUAGE_BUTTONS}
-	language_labels.update(("O'zbekcha", "Русский", "Узбекча"))
-	return text in language_labels
+	command = text.split(maxsplit=1)[0].split("@", 1)[0]
+	return command in ("/start", "/menu") or text in LANGUAGE_LABELS
 
 
 def subscription_keyboard(language: str) -> InlineKeyboardMarkup:
-	"""Показывает одну кнопку-ссылку для вступления в группу."""
-	buttons = SUBSCRIPTION_BUTTONS.get(language, SUBSCRIPTION_BUTTONS["ru"])
+	"""Кнопка-ссылка для вступления в группу и кнопка повторной проверки."""
+	join_text, check_text = SUBSCRIPTION_BUTTONS.get(language, SUBSCRIPTION_BUTTONS["ru"])
 	return InlineKeyboardMarkup(
-		[[InlineKeyboardButton(buttons[0], url=SUBSCRIPTION_GROUP_URL)]]
+		[
+			[InlineKeyboardButton(join_text, url=SUBSCRIPTION_GROUP_URL)],
+			[InlineKeyboardButton(check_text, callback_data="subscription:check")],
+		]
 	)
-
-
-def _is_member_status(member: object) -> bool:
-	return getattr(member, "status", None) in {"creator", "administrator", "member"} or (
-		isinstance(member, ChatMemberRestricted) and member.is_member
-	)
-
-
-def _is_subscription_chat(chat: object) -> bool:
-	configured_chat = str(SUBSCRIPTION_CHAT_ID)
-	if configured_chat.startswith("@"):
-		return getattr(chat, "username", None) == configured_chat[1:]
-	try:
-		return getattr(chat, "id", None) == int(configured_chat)
-	except ValueError:
-		return False
 
 
 async def is_group_member(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-	"""Проверяет актуальное членство пользователя в обязательной группе."""
+	"""Проверяет членство текущего пользователя в обязательной группе."""
 	user = update.effective_user
 	if not user:
 		return False
+	return await check_membership(context.bot, user.id)
 
-	try:
-		member = await context.bot.get_chat_member(SUBSCRIPTION_CHAT_ID, user.id)
-	except TelegramError:
-		LOGGER.exception(
-			"Cannot check subscription for user %s in %s",
-			user.id,
-			SUBSCRIPTION_CHAT_ID,
-		)
-		return False
-	return _is_member_status(member)
+
+async def prompt_group_subscription(
+	update: Update,
+	context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+	"""Предлагает вступить в группу на языке пользователя."""
+	message = update.effective_message
+	if not message:
+		return
+
+	language = user_language(context)
+	await message.reply_text(
+		SUBSCRIPTION_PROMPTS.get(language, SUBSCRIPTION_PROMPTS["ru"]),
+		reply_markup=subscription_keyboard(language),
+	)
 
 
 async def _welcome_new_member(
 	user_id: int,
 	context: ContextTypes.DEFAULT_TYPE,
-	user_data: dict | None = None,
+	user_data: dict,
 ) -> None:
-	user_data = user_data if user_data is not None else {}
+	"""Приветствует вступившего и продолжает онбординг: телефон или выбор колонии."""
 	language = user_data.get("language") or get_user_language(user_id) or "ru"
 	user_data["language"] = language
 	user_data["subscription_welcomed"] = True
 
 	await context.bot.send_message(
 		chat_id=user_id,
-		text=SUBSCRIPTION_WELCOME_TEXTS.get(
-			language,
-			SUBSCRIPTION_WELCOME_TEXTS["ru"],
-		),
+		text=SUBSCRIPTION_WELCOME_TEXTS.get(language, SUBSCRIPTION_WELCOME_TEXTS["ru"]),
 	)
 
-	phone_number = get_user_phone_number(user_id)
+	phone_number = user_data.get("phone_number") or get_user_phone_number(user_id)
 	if phone_number:
 		user_data["phone_number"] = phone_number
 		await context.bot.send_message(
@@ -114,10 +125,9 @@ async def _welcome_new_member(
 		)
 		return
 
-	phone_prompt = PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])
 	await context.bot.send_message(
 		chat_id=user_id,
-		text=phone_prompt["prompt"],
+		text=PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])["prompt"],
 		reply_markup=contact_request_keyboard(language),
 	)
 
@@ -126,54 +136,50 @@ async def handle_subscription_member(
 	update: Update,
 	context: ContextTypes.DEFAULT_TYPE,
 ) -> None:
-	"""Приветствует пользователя при вступлении и продолжает его онбординг."""
+	"""Реагирует на вступление в группу и выход из неё."""
 	change = update.chat_member
-	if not change or not _is_subscription_chat(change.chat):
+	if not change or not is_subscription_chat(change.chat):
 		return
 
 	user = change.new_chat_member.user
 	if user.is_bot:
 		return
 
+	was_member = is_member_status(change.old_chat_member)
+	is_member = is_member_status(change.new_chat_member)
+	remember_membership(user.id, is_member)
+
+	# user_data привязан к пользователю, совершившему действие; если его добавил
+	# кто-то другой, берём данные самого вступившего из общего хранилища.
 	actor = update.effective_user
 	user_data = (
 		context.user_data
 		if actor and actor.id == user.id
-		else {}
+		else context.application.user_data.get(user.id, {})
 	)
-	was_member = _is_member_status(change.old_chat_member)
-	is_member = _is_member_status(change.new_chat_member)
-	if is_member and not was_member and not user_data.get("subscription_welcomed"):
-		await _welcome_new_member(user.id, context)
-	elif not is_member:
+	if not is_member:
 		user_data.pop("subscription_welcomed", None)
-
-
-async def prompt_group_subscription(
-	update: Update,
-	context: ContextTypes.DEFAULT_TYPE,
-) -> None:
-	"""Предлагает вступить в группу на выбранном пользователем языке."""
-	message = update.effective_message
-	if not message:
+		return
+	if was_member or user_data.get("subscription_welcomed"):
+		return
+	# Пишем только тем, кто уже запускал бота: остальным Telegram не даст отправить сообщение.
+	if get_user_language(user.id) is None:
 		return
 
-	language = context.user_data.get("language", "ru")
-	prompt = SUBSCRIPTION_PROMPTS.get(language, SUBSCRIPTION_PROMPTS["ru"])
-	await message.reply_text(
-		prompt,
-		reply_markup=subscription_keyboard(language),
-	)
+	try:
+		await _welcome_new_member(user.id, context, user_data)
+	except Forbidden:
+		LOGGER.info("User %s joined the group but has blocked the bot", user.id)
+	except TelegramError:
+		LOGGER.exception("Failed to welcome new group member %s", user.id)
 
 
 async def require_group_subscription(
 	update: Update,
 	context: ContextTypes.DEFAULT_TYPE,
 ) -> None:
-	"""Останавливает обработку личных обновлений, пока пользователь не состоит в группе."""
-	user = update.effective_user
-	chat = update.effective_chat
-	if not user or user.is_bot or not chat or chat.type != "private":
+	"""Останавливает обработку личных обновлений, пока пользователь не вступил в группу."""
+	if not _is_private_user_update(update) or update.chat_member:
 		return
 
 	if is_language_selection_update(update):
@@ -196,13 +202,16 @@ async def handle_subscription_check(
 	update: Update,
 	context: ContextTypes.DEFAULT_TYPE,
 ) -> None:
-	"""Обрабатывает старую кнопку проверки без повторного показа выбора языка."""
+	"""Кнопка «Я вступил»: до неё доходят только подтверждённые участники группы."""
 	query = update.callback_query
 	user = update.effective_user
-	if not query or query.data != "subscription:check" or not user:
+	if not query or not user:
 		return
 
 	await query.answer()
-	user_data = context.user_data
-	if not user_data.get("subscription_welcomed") and await is_group_member(update, context):
-		await _welcome_new_member(user.id, context, user_data)
+	if query.message:
+		try:
+			await query.edit_message_reply_markup(reply_markup=None)
+		except TelegramError:
+			pass
+	await _welcome_new_member(user.id, context, context.user_data)

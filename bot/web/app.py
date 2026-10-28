@@ -15,7 +15,7 @@ from bot.database import (
 	export_users_csv,
 	initialize_user_database,
 )
-from bot.database.web_admin import (
+from bot.database.web_queries import (
 	get_web_activity_counts,
 	get_web_click_history,
 	get_web_dashboard_summary,
@@ -154,12 +154,8 @@ def main() -> None:
 	if not 1 <= port <= 65535:
 		raise RuntimeError("WEB_ADMIN_PORT must be a number between 1 and 65535")
 
-	serve(create_app(), host="127.0.0.1", port=port)
-
-
-load_dotenv()
-app = create_app()
-
-
-if __name__ == "__main__":
-	main()
+	try:
+		app = create_app()
+	except RuntimeError as error:
+		raise SystemExit(f"Configuration error: {error}. See .env.example") from None
+	serve(app, host="127.0.0.1", port=port)

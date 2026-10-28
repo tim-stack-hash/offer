@@ -78,9 +78,7 @@ def colony_location_keyboard(language: str, colony_group: str) -> InlineKeyboard
 	if colony_group not in COLONY_COORDINATES:
 		return None
 
-	colony_index = COLONY_GROUPS.index(colony_group)
-	colony_name = COLONY_GROUP_LABELS.get(language, COLONY_GROUP_LABELS["ru"])[colony_index]
-	button_text = colony_action_button_texts(language, colony_name)[0]
+	button_text = colony_action_button_texts(language)[0]
 	return InlineKeyboardMarkup(
 		[[InlineKeyboardButton(button_text, callback_data="colonies:location")]]
 	)
@@ -102,12 +100,7 @@ def colony_location_reply_keyboard(
 	if colony_group not in COLONY_GROUPS:
 		return None
 
-	colony_index = COLONY_GROUPS.index(colony_group)
-	colony_name = COLONY_GROUP_LABELS.get(language, COLONY_GROUP_LABELS["ru"])[colony_index]
-	location_text, directory_text, application_text = colony_action_button_texts(
-		language,
-		colony_name,
-	)
+	location_text, directory_text, application_text = colony_action_button_texts(language)
 	clothing_text = CLOTHING_BUTTONS.get(language, CLOTHING_BUTTONS["ru"])
 	group_button_text = COLONY_GROUP_BUTTONS.get(
 		language,
