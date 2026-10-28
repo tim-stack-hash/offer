@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import sqlite3
-from contextlib import closing
 
-from bot.config import USER_DATABASE_PATH
+from bot.database.connection import connect
 
 
 def register_support_message(
@@ -14,7 +12,7 @@ def register_support_message(
 	user_id: int,
 ) -> None:
 	"""Сохраняет пользователя, которому принадлежит сообщение-обращение."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			connection.execute(
 				"""
@@ -34,7 +32,7 @@ def get_support_message_recipient(
 	support_message_id: int,
 ) -> int | None:
 	"""Возвращает Telegram ID пользователя для сообщения-обращения."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			row = connection.execute(
 				"""

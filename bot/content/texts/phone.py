@@ -4,17 +4,17 @@ from __future__ import annotations
 
 PHONE_PROMPTS = {
 	"ru": {
-		"prompt": "📱 Нажмите кнопку ниже, чтобы отправить свой номер телефона и продолжить.",
+		"prompt": "📱 Отправьте свой номер телефона кнопкой ниже. Он нужен, чтобы поддержка могла с вами связаться.",
 		"retry": "📱 Пожалуйста, отправьте свой номер кнопкой ниже.",
 		"received": "✅ Номер телефона сохранён.",
 	},
 	"uz": {
-		"prompt": "📱 Telefon raqamingizni yuborish va davom etish uchun quyidagi tugmani bosing.",
+		"prompt": "📱 Telefon raqamingizni quyidagi tugma orqali yuboring. U qo'llab-quvvatlash xizmati siz bilan bog'lanishi uchun kerak.",
 		"retry": "📱 Iltimos, o'z raqamingizni pastdagi tugma orqali yuboring.",
 		"received": "✅ Telefon raqamingiz saqlandi.",
 	},
 	"uz_cyr": {
-		"prompt": "📱 Телефон рақамингизни юбориш ва давом этиш учун қуйидаги тугмани босинг.",
+		"prompt": "📱 Телефон рақамингизни қуйидаги тугма орқали юборинг. У қўллаб-қувватлаш хизмати сиз билан боғланиши учун керак.",
 		"retry": "📱 Илтимос, ўз рақамингизни қуйидаги тугма орқали юборинг.",
 		"received": "✅ Телефон рақамингиз сақланди.",
 	},

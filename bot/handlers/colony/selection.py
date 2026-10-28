@@ -7,17 +7,21 @@ from telegram.ext import ContextTypes
 
 from bot.content.colonies import COLONY_COORDINATES, COLONY_GROUP_LABELS, COLONY_GROUPS
 from bot.content.texts import (
-	ACTION_PROMPTS,
+	COLONY_NOT_FOUND_TEXTS,
 	COLONY_PROMPTS,
 	COLONY_SELECTED_TEXTS,
-	LOCATION_MISSING_TEXTS,
 	colony_location_prompt,
 )
-from bot.keyboards import (
-	colony_group_keyboard,
-	colony_location_reply_keyboard,
-	language_selection_keyboard,
+from bot.handlers.common import (
+	HTML,
+	bold,
+	escape,
+	menu_screen,
+	no_data_text,
+	selected_colony_name,
+	user_language,
 )
+from bot.keyboards import colony_group_keyboard
 
 
 async def handle_colony_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -26,7 +30,7 @@ async def handle_colony_selection(update: Update, context: ContextTypes.DEFAULT_
 	if not query or not query.data:
 		return
 
-	language = context.user_data.get("language", "ru")
+	language = user_language(context)
 	if query.data == "colonies:open":
 		await query.answer()
 		if query.message:
@@ -35,27 +39,17 @@ async def handle_colony_selection(update: Update, context: ContextTypes.DEFAULT_
 				reply_markup=colony_group_keyboard(language),
 			)
 		return
+
 	if query.data == "colonies:location":
-		colony_group = context.user_data.get("colony")
-		coordinates = COLONY_COORDINATES.get(colony_group)
+		coordinates = COLONY_COORDINATES.get(context.user_data.get("colony"))
 		if not coordinates:
-			await query.answer(
-				LOCATION_MISSING_TEXTS.get(language, LOCATION_MISSING_TEXTS["ru"]),
-				show_alert=True,
-			)
+			await query.answer(no_data_text(language), show_alert=True)
 			return
 		await query.answer()
 		if query.message:
-			colony_name = (
-				context.user_data.get("colony_name") or colony_group
-			).removeprefix("📍").strip()
-			await query.message.reply_text(
-				colony_location_prompt(language, colony_name)
-			)
-			await query.message.reply_location(
-				latitude=coordinates[0],
-				longitude=coordinates[1],
-			)
+			colony_name = selected_colony_name(context, language).removeprefix("📍").strip()
+			await query.message.reply_text(colony_location_prompt(language, colony_name))
+			await query.message.reply_location(latitude=coordinates[0], longitude=coordinates[1])
 		return
 
 	try:
@@ -65,12 +59,10 @@ async def handle_colony_selection(update: Update, context: ContextTypes.DEFAULT_
 			return
 		colony_group = COLONY_GROUPS[colony_index]
 	except (ValueError, IndexError):
-		not_found_texts = {
-			"ru": "Колония не найдена.",
-			"uz": "Koloniya topilmadi.",
-			"uz_cyr": "Колония топилмади.",
-		}
-		await query.answer(not_found_texts.get(language, not_found_texts["ru"]), show_alert=True)
+		await query.answer(
+			COLONY_NOT_FOUND_TEXTS.get(language, COLONY_NOT_FOUND_TEXTS["ru"]),
+			show_alert=True,
+		)
 		return
 
 	context.user_data["colony"] = colony_group
@@ -78,20 +70,14 @@ async def handle_colony_selection(update: Update, context: ContextTypes.DEFAULT_
 	colony_name = COLONY_GROUP_LABELS.get(language, COLONY_GROUP_LABELS["ru"])[colony_index]
 	context.user_data["colony_name"] = colony_name
 	await query.answer()
-	if query.message:
-		selected_text = COLONY_SELECTED_TEXTS.get(language, COLONY_SELECTED_TEXTS["ru"])
-		await query.edit_message_text(
-			f"{selected_text}\n{colony_name}",
-			reply_markup=InlineKeyboardMarkup([]),
-		)
-		location_keyboard = colony_location_reply_keyboard(language, colony_group)
-		if not location_keyboard:
-			await query.message.reply_text(
-				LOCATION_MISSING_TEXTS.get(language, LOCATION_MISSING_TEXTS["ru"]),
-				reply_markup=language_selection_keyboard(),
-			)
-			return
-		await query.message.reply_text(
-			ACTION_PROMPTS.get(language, ACTION_PROMPTS["ru"]),
-			reply_markup=location_keyboard,
-		)
+	if not query.message:
+		return
+
+	selected_text = COLONY_SELECTED_TEXTS.get(language, COLONY_SELECTED_TEXTS["ru"])
+	await query.edit_message_text(
+		f"{escape(selected_text)} {bold(colony_name)}",
+		parse_mode=HTML,
+		reply_markup=InlineKeyboardMarkup([]),
+	)
+	menu_text, keyboard = menu_screen(context)
+	await query.message.reply_text(menu_text, parse_mode=HTML, reply_markup=keyboard)

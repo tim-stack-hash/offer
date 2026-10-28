@@ -1,5 +1,16 @@
-bot_users.sqlite3
-.venv
-/.venv-1
+# Секреты и локальные данные
 .env
+data/
+bot_users.sqlite3*
+
+# Python
 __pycache__/
+*.py[cod]
+.venv/
+.venv-*/
+.pytest_cache/
+
+# Системные и временные файлы
+.DS_Store
+*~
+.playwright-mcp/

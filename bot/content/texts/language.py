@@ -18,16 +18,15 @@ CHANGE_LANGUAGE_BUTTONS = {
 
 # Подпись кнопки отправки номера телефона.
 CONTACT_BUTTON_TEXT = {
-	"ru": "Отправить номер телефона",
-	"uz": "Telefon raqamni yuborish",
-	"uz_cyr": "Телефон рақамини юбориш",
+	"ru": "📱 Отправить номер телефона",
+	"uz": "📱 Telefon raqamni yuborish",
+	"uz_cyr": "📱 Телефон рақамини юбориш",
 }
 
 SUBSCRIPTION_PROMPTS = {
-	"ru": "Чтобы продолжить пользоваться ботом, вступите в группу\n"
-        "SMART DUNYO.",
-	"uz": "Botdan foydalanishni davom ettirish uchun guruhimizga qo‘shiling va «Qo‘shildim» tugmasни bosing.",
-	"uz_cyr": "Ботдан фойдаланишни давом эттириш учун гуруҳимизга қўшилинг ва «Қўшилдим» тугмасни босинг.",
+	"ru": "📢 <b>Вступите в группу SMART DUNYO</b>\n\nБот работает только для участников группы.\n1️⃣ Нажмите «{join}»\n2️⃣ Вернитесь сюда и нажмите «{check}»",
+	"uz": "📢 <b>SMART DUNYO guruhiga qo'shiling</b>\n\nBot faqat guruh a'zolari uchun ishlaydi.\n1️⃣ «{join}» tugmasini bosing\n2️⃣ Shu yerga qaytib, «{check}» tugmasini bosing",
+	"uz_cyr": "📢 <b>SMART DUNYO гуруҳига қўшилинг</b>\n\nБот фақат гуруҳ аъзолари учун ишлайди.\n1️⃣ «{join}» тугмасини босинг\n2️⃣ Шу ерга қайтиб, «{check}» тугмасини босинг",
 }
 
 SUBSCRIPTION_BUTTONS = {
@@ -101,17 +100,9 @@ FEEDBACK_TOO_LONG_TEXTS = {
 }
 
 SUPPORT_PROMPTS = {
-	"ru": """Здраствуйте! Столкнулись со сложностями? Давайте исправим.
-• Напишите всё одним сообщением в этот чат — оператор уже подключается.
-• Или позвоните нам в один клик: [+998712009333], если вам удобнее объяснить голосом.""",
-
-	"uz": """Xizmat ko‘rsatishda qiyinchiliklarga duch keldingizmi? Keling, buni tuzatamiz.
-• Barchasini ushbu chatga bitta xabar qilib yozing — operator hozir ulanadi.
-• Yoki agar ovozli tushuntirish qulayroq bo‘lsa, birgina bosish bilan bizga qo‘ng‘iroq qiling: [+998712009333].""",
-
-	"uz_cyr": """Хизмат кўрсатишда қийинчиликларга дуч келдингизми? Келинг, буни тузатамиз.
-• Барчасини ушбу чатга битта хабар қилиб ёзинг — оператор ҳозир уланади.
-• Ёки агар овозли тушунтириш қулайроқ бўлса, биргина босиш билан бизга қўнғироқ қилинг: [+998712009333].""",
+	"ru": "Здравствуйте! Столкнулись со сложностями? Давайте исправим.\n• Напишите всё одним сообщением в этот чат — оператор уже подключается.\n• Или позвоните нам: +998712009333, если вам удобнее объяснить голосом.",
+	"uz": "Xizmat ko‘rsatishda qiyinchiliklarga duch keldingizmi? Keling, buni tuzatamiz.\n• Barchasini ushbu chatga bitta xabar qilib yozing — operator hozir ulanadi.\n• Yoki ovozli tushuntirish qulayroq bo‘lsa, bizga qo‘ng‘iroq qiling: +998712009333.",
+	"uz_cyr": "Хизмат кўрсатишда қийинчиликларга дуч келдингизми? Келинг, буни тузатамиз.\n• Барчасини ушбу чатга битта хабар қилиб ёзинг — оператор ҳозир уланади.\n• Ёки овозли тушунтириш қулайроқ бўлса, бизга қўнғироқ қилинг: +998712009333.",
 }
 
 SUPPORT_CANCEL_BUTTONS = {
@@ -127,9 +118,9 @@ SUPPORT_CANCELLED_TEXTS = {
 }
 
 SUPPORT_SUCCESS_TEXTS = {
-	"ru": "✅ Ожидайте ответ.",
-	"uz": "✅ Javobni kuting.",
-	"uz_cyr": "✅ Жавобни кутинг.",
+	"ru": "✅ Сообщение отправлено. Оператор ответит здесь, в этом чате.",
+	"uz": "✅ Xabaringiz yuborildi. Operator shu chatda javob beradi.",
+	"uz_cyr": "✅ Хабарингиз юборилди. Оператор шу чатда жавоб беради.",
 }
 
 SUPPORT_TOO_LONG_TEXTS = {
@@ -140,7 +131,20 @@ SUPPORT_TOO_LONG_TEXTS = {
 
 # Приветственный текст на экране /start (запасной вариант, основной текст задан прямо в обработчике).
 START_TEXTS = {
-	"ru": "👋 Здравствуйте!\nЧерез эту платформу вы можете узнать о правилах колоний и разрешенных вещах для заключенных.\n\n🌐 Выберите язык:",
-	"uz": "👋 Assalomu alaykum!\nUshbu platforma orqali koloniyalar tartibi va mahkumlar uchun ruxsat etilgan buyumlar haqida ma'lumot olishingiz mumkin.\n\n🌐 Tilni tanlang:",
-	"uz_cyr": "👋 Ассалому алайкум!\nУшбу платформа орқали колониялар тартиби ва маҳкумлар учун рухсат этилган буюмлар ҳақида маълумот олишингиз мумкин.\n\n🌐 Тилни танланг:",
+	"ru": "👋 <b>Здравствуйте!</b>\n\nЧерез эту платформу вы можете узнать о правилах колоний и разрешённых вещах для заключённых.\n\n🌐 Выберите язык 👇",
+	"uz": "👋 <b>Assalomu alaykum!</b>\n\nUshbu platforma orqali koloniyalar tartibi va mahkumlar uchun ruxsat etilgan buyumlar haqida ma'lumot olishingiz mumkin.\n\n🌐 Tilni tanlang 👇",
+	"uz_cyr": "👋 <b>Ассалому алайкум!</b>\n\nУшбу платформа орқали колониялар тартиби ва маҳкумлар учун рухсат этилган буюмлар ҳақида маълумот олишингиз мумкин.\n\n🌐 Тилни танланг 👇",
+}
+
+# Смена языка из меню и подтверждение выбора.
+CHANGE_LANGUAGE_PROMPTS = {
+	"ru": "🌐 Выберите новый язык:",
+	"uz": "🌐 Yangi tilni tanlang:",
+	"uz_cyr": "🌐 Янги тилни танланг:",
+}
+
+LANGUAGE_SELECTED_TEXTS = {
+	"ru": "🇷🇺 Вы выбрали русский язык.",
+	"uz": "🇺🇿 O'zbek tili tanlandi.",
+	"uz_cyr": "🇺🇿 Ўзбек тили танланди.",
 }

@@ -25,7 +25,9 @@ from bot.content.texts import (
 	CLOTHING_BUTTONS,
 	COLONY_GROUP_BUTTONS,
 	FEEDBACK_BUTTON_TEXT,
+	KEYBOARD_PLACEHOLDERS,
 	MAIN_GROUP_BUTTONS,
+	MENU_SECTION_BUTTONS,
 	SUPPORT_BUTTON_TEXT,
 	colony_action_button_texts,
 )
@@ -78,19 +80,10 @@ def colony_location_keyboard(language: str, colony_group: str) -> InlineKeyboard
 	if colony_group not in COLONY_COORDINATES:
 		return None
 
-	colony_index = COLONY_GROUPS.index(colony_group)
-	colony_name = COLONY_GROUP_LABELS.get(language, COLONY_GROUP_LABELS["ru"])[colony_index]
-	button_text = colony_action_button_texts(language, colony_name)[0]
+	button_text = colony_action_button_texts(language)[0]
 	return InlineKeyboardMarkup(
 		[[InlineKeyboardButton(button_text, callback_data="colonies:location")]]
 	)
-
-
-MENU_SECTION_BUTTONS = {
-	"ru": ("ℹ️ Информация", "🧰 Услуги", "⬅️ Назад"),
-	"uz": ("ℹ️ Ma'lumot", "🧰 Xizmatlar", "⬅️ Orqaga"),
-	"uz_cyr": ("ℹ️ Маълумот", "🧰 Хизматлар", "⬅️ Орқага"),
-}
 
 
 def colony_location_reply_keyboard(
@@ -102,12 +95,7 @@ def colony_location_reply_keyboard(
 	if colony_group not in COLONY_GROUPS:
 		return None
 
-	colony_index = COLONY_GROUPS.index(colony_group)
-	colony_name = COLONY_GROUP_LABELS.get(language, COLONY_GROUP_LABELS["ru"])[colony_index]
-	location_text, directory_text, application_text = colony_action_button_texts(
-		language,
-		colony_name,
-	)
+	location_text, directory_text, application_text = colony_action_button_texts(language)
 	clothing_text = CLOTHING_BUTTONS.get(language, CLOTHING_BUTTONS["ru"])
 	group_button_text = COLONY_GROUP_BUTTONS.get(
 		language,
@@ -155,8 +143,10 @@ def colony_location_reply_keyboard(
 				KeyboardButton(SUPPORT_BUTTON_TEXT.get(language, SUPPORT_BUTTON_TEXT["ru"])),
 			],
 		])
+	placeholders = KEYBOARD_PLACEHOLDERS.get(language, KEYBOARD_PLACEHOLDERS["ru"])
 	return ReplyKeyboardMarkup(
 		menu_rows,
 		resize_keyboard=True,
 		is_persistent=True,
+		input_field_placeholder=placeholders["menu" if section == "root" else section],
 	)

@@ -10,6 +10,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 
 from bot.content.texts import COLONY_PROMPTS, PHONE_PROMPTS
 from bot.database import save_user_phone_number
+from bot.handlers.common import HTML, escape, step_header, user_language
 from bot.keyboards import (
 	change_language_keyboard,
 	colony_group_keyboard,
@@ -17,7 +18,7 @@ from bot.keyboards import (
 )
 
 PHONE_REQUIRED = 1
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 async def remind_phone_required(
@@ -29,7 +30,7 @@ async def remind_phone_required(
 	if not message:
 		return PHONE_REQUIRED
 
-	language = context.user_data.get("language", "ru")
+	language = user_language(context)
 	texts = PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])
 	await message.reply_text(
 		texts["retry"],
@@ -48,7 +49,7 @@ async def receive_phone_number(
 	if not message or not message.contact or not user:
 		return PHONE_REQUIRED
 
-	language = context.user_data.get("language", "ru")
+	language = user_language(context)
 	texts = PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])
 	# Telegram normally includes user_id for a contact shared via request_contact,
 	# but some clients/updates omit it. The sender identity is still known; only
@@ -63,7 +64,7 @@ async def receive_phone_number(
 	try:
 		save_user_phone_number(user.id, message.contact.phone_number)
 	except sqlite3.Error:
-		logger.exception("Failed to save phone number for user %s", user.id)
+		LOGGER.exception("Failed to save phone number for user %s", user.id)
 		await message.reply_text(
 			texts["retry"],
 			reply_markup=contact_request_keyboard(language),
@@ -75,8 +76,10 @@ async def receive_phone_number(
 		texts["received"],
 		reply_markup=change_language_keyboard(language),
 	)
+	colony_prompt = escape(COLONY_PROMPTS.get(language, COLONY_PROMPTS["ru"]))
 	await message.reply_text(
-		COLONY_PROMPTS.get(language, COLONY_PROMPTS["ru"]),
+		f"{step_header(language, 3)}\n{colony_prompt}",
+		parse_mode=HTML,
 		reply_markup=colony_group_keyboard(language),
 	)
 	return ConversationHandler.END

@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import sqlite3
-from contextlib import closing
 
-from bot.config import USER_DATABASE_PATH
+from bot.database.connection import connect
 
 
 def save_lawyer_review(
@@ -14,7 +12,7 @@ def save_lawyer_review(
 	review: str,
 ) -> tuple[int, str]:
 	"""Сохраняет отзыв и возвращает его ID и время создания."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			cursor = connection.execute(
 				"""
@@ -35,7 +33,7 @@ def save_lawyer_review(
 
 def get_lawyer_reviews(lawyer_id: str) -> list[tuple[str, str, str]]:
 	"""Возвращает отзывы адвоката с именами авторов в порядке публикации."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			rows = connection.execute(
 				"""
@@ -71,7 +69,7 @@ def get_lawyer_reviews(lawyer_id: str) -> list[tuple[str, str, str]]:
 
 def get_lawyer_review_count(lawyer_id: str) -> int:
 	"""Возвращает количество отзывов об адвокате."""
-	with closing(sqlite3.connect(USER_DATABASE_PATH)) as connection:
+	with connect() as connection:
 		with connection:
 			return connection.execute(
 				"SELECT COUNT(*) FROM lawyer_reviews WHERE lawyer_id = ?",
