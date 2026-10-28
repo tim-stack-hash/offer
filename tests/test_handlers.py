@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from telegram.ext import ConversationHandler
 
-from bot.content.texts import ADDITIONAL_INFO_BUTTONS, COLONY_LOCATION_BUTTONS
+from bot.content.texts import ADDITIONAL_INFO_BUTTONS, COLONY_LOCATION_BUTTONS, UNKNOWN_TEXT_REPLIES
 from bot.database import get_lawyer_reviews
 from bot.handlers import feedback, lawyer
 from bot.handlers.colony import menu
@@ -62,7 +62,7 @@ def test_unknown_text_gets_a_hint():
 	asyncio.run(menu.handle_menu_text(update, context))
 
 	update.message.reply_text.assert_awaited_once()
-	assert update.message.reply_text.call_args.args[0] == menu.UNKNOWN_TEXT_REPLIES["ru"]
+	assert update.message.reply_text.call_args.args[0] == UNKNOWN_TEXT_REPLIES["ru"]
 
 
 def test_menu_labels_have_no_conflicts_and_cover_all_languages():

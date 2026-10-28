@@ -16,6 +16,7 @@ from bot.config import (
 	is_admin,
 )
 from bot.content.texts import (
+	DELIVERY_ERROR_TEXTS,
 	SUPPORT_CANCELLED_TEXTS,
 	SUPPORT_PROMPTS,
 	SUPPORT_SUCCESS_TEXTS,
@@ -31,13 +32,6 @@ from bot.keyboards import support_cancel_keyboard
 
 SUPPORT_MESSAGE = 1
 LOGGER = logging.getLogger(__name__)
-
-DELIVERY_ERROR_TEXTS = {
-	"ru": "⚠️ Не удалось отправить сообщение. Попробуйте ещё раз чуть позже.",
-	"uz": "⚠️ Xabarni yuborib bo'lmadi. Birozdan so'ng qayta urinib ko'ring.",
-	"uz_cyr": "⚠️ Хабарни юбориб бўлмади. Бироздан сўнг қайта уриниб кўринг.",
-}
-
 
 def is_too_long(text: str) -> bool:
 	return telegram_text_length(text) > MAX_USER_MESSAGE_LENGTH

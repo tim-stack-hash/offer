@@ -8,8 +8,10 @@ from telegram.ext import ContextTypes, ConversationHandler
 from bot.content.colonies import COLONY_GROUPS, COLONY_GROUP_LABELS
 from bot.content.texts import (
 	ACTION_PROMPTS,
+	CHANGE_LANGUAGE_PROMPTS,
 	COLONY_PROMPTS,
 	COLONY_SELECTED_TEXTS,
+	LANGUAGE_SELECTED_TEXTS,
 	PHONE_PROMPTS,
 )
 from bot.database import register_user, save_user_language
@@ -24,18 +26,6 @@ from bot.keyboards import (
 	contact_request_keyboard,
 	language_selection_keyboard,
 )
-
-CHANGE_LANGUAGE_PROMPTS = {
-	"ru": "🌐 Выберите новый язык:",
-	"uz": "🌐 Yangi tilni tanlang:",
-	"uz_cyr": "🌐 Янги тилни танланг:",
-}
-
-LANGUAGE_SELECTED_TEXTS = {
-	"uz": "🇺🇿 O'zbek tili tanlandi.",
-	"ru": "🇷🇺 Вы выбрали русский язык.",
-	"uz_cyr": "🇺🇿 Ўзбек тили танланди.",
-}
 
 
 async def begin_language_change(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

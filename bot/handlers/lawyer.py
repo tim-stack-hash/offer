@@ -14,6 +14,8 @@ from bot.content.lawyer_regions import LAWYER_REGIONS
 from bot.content.lawyers import LAWYERS
 from bot.content.texts import (
 	LAWYER_LIST_EMPTY_TEXTS,
+	LAWYER_NOT_FOUND_TEXTS,
+	LAWYER_PHOTO_MISSING_TEXTS,
 	LAWYER_PROFILE_CAPTIONS,
 	LAWYER_PROMPTS,
 	LAWYER_CALL_PROMPTS,
@@ -29,6 +31,7 @@ from bot.content.texts import (
 	LAWYER_REVIEW_TOO_LONG_TEXTS,
 	LAWYER_REGION_NOT_FOUND_TEXTS,
 	LAWYER_REGION_PROMPTS,
+	UNKNOWN_ACTION_TEXTS,
 )
 from bot.database import (
 	get_lawyer_review_count,
@@ -58,13 +61,13 @@ async def handle_lawyer_region(
 	if not query or not query.data:
 		return
 
+	language = user_language(context)
 	parts = query.data.split(":", 2)
 	if len(parts) != 3 or parts[0] != "lawyer":
-		await query.answer("Неизвестное действие.", show_alert=True)
+		await query.answer(UNKNOWN_ACTION_TEXTS.get(language, UNKNOWN_ACTION_TEXTS["ru"]), show_alert=True)
 		return
 
 	_, action, item_id = parts
-	language = user_language(context)
 	message = query.message
 
 	if action == "region":
@@ -105,7 +108,7 @@ async def handle_lawyer_region(
 
 	lawyer = LAWYERS.get(item_id)
 	if not lawyer:
-		await query.answer("Адвокат не найден.", show_alert=True)
+		await query.answer(LAWYER_NOT_FOUND_TEXTS.get(language, LAWYER_NOT_FOUND_TEXTS["ru"]), show_alert=True)
 		return
 
 	if action == "profile":
@@ -143,9 +146,10 @@ async def handle_lawyer_region(
 					reply_markup=lawyer_profile_keyboard(language, item_id),
 				)
 		except OSError:
-			LOGGER.exception("Could not read lawyer profile photo: %s", lawyer["photo_path"])
+			LOGGER.warning("Lawyer profile photo is missing: %s", lawyer["photo_path"])
+			photo_missing = LAWYER_PHOTO_MISSING_TEXTS.get(language, LAWYER_PHOTO_MISSING_TEXTS["ru"])
 			await message.reply_text(
-				f"{caption}\n\nФото адвоката временно недоступно.",
+				f"{caption}\n\n{photo_missing}",
 				reply_markup=lawyer_profile_keyboard(language, item_id),
 			)
 		return
@@ -248,7 +252,7 @@ async def handle_lawyer_region(
 		await message.reply_text(current_text)
 		return
 
-	await query.answer("Неизвестное действие.", show_alert=True)
+	await query.answer(UNKNOWN_ACTION_TEXTS.get(language, UNKNOWN_ACTION_TEXTS["ru"]), show_alert=True)
 
 
 async def handle_lawyer_button(
@@ -290,7 +294,7 @@ async def handle_lawyer_review_text(
 	lawyer = LAWYERS.get(lawyer_id)
 	if not lawyer:
 		context.user_data.pop("pending_lawyer_review", None)
-		await message.reply_text("Адвокат не найден. Откройте раздел «Адвокаты» заново.")
+		await message.reply_text(LAWYER_NOT_FOUND_TEXTS.get(language, LAWYER_NOT_FOUND_TEXTS["ru"]))
 		return True
 
 	if not review_text:

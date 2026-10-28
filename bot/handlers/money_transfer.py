@@ -11,6 +11,7 @@ from telegram.ext import ContextTypes
 
 from bot.config import MONEY_TRANSFER_MEDIA
 from bot.content.texts import (
+	MONEY_TRANSFER_DONE_TEXTS,
 	MONEY_TRANSFER_PROMPT_TEXTS,
 	MONEY_TRANSFER_SENDING_TEXTS,
 	TRANSFER_MONEY_PROMPTS,
@@ -23,12 +24,6 @@ LOGGER = logging.getLogger(__name__)
 
 # Через сколько учтённых действий пользователю предлагаются инструкции.
 MONEY_TRANSFER_ACTION_THRESHOLD = 20
-
-INSTRUCTIONS_SENT_TEXTS = {
-	"ru": "✅ Готово, все материалы отправлены.",
-	"uz": "✅ Tayyor, barcha materiallar yuborildi.",
-	"uz_cyr": "✅ Тайёр, барча материаллар юборилди.",
-}
 
 
 async def send_money_transfer_prompt(bot: Bot, chat_id: int, language: str) -> None:
@@ -70,7 +65,7 @@ async def _send_instruction_media(bot: Bot, chat_id: int, language: str) -> None
 	if sent_any:
 		await bot.send_message(
 			chat_id=chat_id,
-			text=INSTRUCTIONS_SENT_TEXTS.get(language, INSTRUCTIONS_SENT_TEXTS["ru"]),
+			text=MONEY_TRANSFER_DONE_TEXTS.get(language, MONEY_TRANSFER_DONE_TEXTS["ru"]),
 		)
 
 

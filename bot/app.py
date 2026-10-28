@@ -24,6 +24,7 @@ from bot.config import (
 	is_content_protected,
 	validate_settings,
 )
+from bot.content.texts import ERROR_TEXTS
 from bot.database import initialize_user_database
 from bot.handlers import register_handlers
 from bot.handlers.common import user_language
@@ -31,15 +32,17 @@ from bot.jobs import schedule_jobs
 
 LOGGER = logging.getLogger(__name__)
 
-BOT_COMMANDS = [
-	BotCommand("start", "Запустить бота"),
-	BotCommand("menu", "Выбрать язык и колонию"),
-]
-
-ERROR_TEXTS = {
-	"ru": "⚠️ Произошла ошибка. Попробуйте ещё раз или нажмите /start.",
-	"uz": "⚠️ Xatolik yuz berdi. Qayta urinib ko'ring yoki /start ni bosing.",
-	"uz_cyr": "⚠️ Хатолик юз берди. Қайта уриниб кўринг ёки /start ни босинг.",
+# Описания команд в меню Telegram: русские по умолчанию и узбекские для тех,
+# у кого Telegram на узбекском (у Telegram нет отдельного кода для кириллицы).
+BOT_COMMANDS: dict[str | None, list[BotCommand]] = {
+	None: [
+		BotCommand("start", "Запустить бота"),
+		BotCommand("menu", "Выбрать язык и колонию"),
+	],
+	"uz": [
+		BotCommand("start", "Botni ishga tushirish"),
+		BotCommand("menu", "Til va koloniyani tanlash"),
+	],
 }
 
 
@@ -63,7 +66,8 @@ async def _post_init(application: Application) -> None:
 	"""Выполняется перед стартом polling: база, задачи по расписанию, команды меню."""
 	initialize_user_database()
 	schedule_jobs(application)
-	await application.bot.set_my_commands(BOT_COMMANDS)
+	for language_code, commands in BOT_COMMANDS.items():
+		await application.bot.set_my_commands(commands, language_code=language_code)
 
 
 def build_application(request: BaseRequest | None = None) -> Application:

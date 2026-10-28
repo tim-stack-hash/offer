@@ -7,6 +7,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 
 from bot.config import get_feedback_chat_id
 from bot.content.texts import (
+	DELIVERY_ERROR_TEXTS,
 	FEEDBACK_CANCELLED_TEXTS,
 	FEEDBACK_CATEGORY_BUTTONS,
 	FEEDBACK_CATEGORY_PROMPTS,
@@ -15,7 +16,7 @@ from bot.content.texts import (
 	FEEDBACK_TOO_LONG_TEXTS,
 )
 from bot.handlers.common import return_user_keyboard, user_language
-from bot.handlers.support import DELIVERY_ERROR_TEXTS, forward_user_report, is_too_long
+from bot.handlers.support import forward_user_report, is_too_long
 from bot.keyboards import feedback_category_keyboard, support_cancel_keyboard
 
 FEEDBACK_CATEGORY = 1

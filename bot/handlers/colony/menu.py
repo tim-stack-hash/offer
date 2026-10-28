@@ -46,6 +46,7 @@ from bot.content.texts import (
 	COLONY_GROUP_MISSING_TEXTS,
 	COLONY_LOCATION_BUTTONS,
 	COLONY_PROMPTS,
+	GROUP_SELECTED_TEXTS,
 	HOTEL_INFO_LABELS,
 	HOTEL_INFO_MISSING_TEXTS,
 	IN_DEVELOPMENT_TEXTS,
@@ -53,6 +54,8 @@ from bot.content.texts import (
 	MAIN_GROUP_BUTTONS,
 	MAIN_GROUP_LINK_PROMPTS,
 	PHONE_PROMPTS,
+	UNKNOWN_ACTION_TEXTS,
+	UNKNOWN_TEXT_REPLIES,
 	colony_action_button_texts,
 	colony_location_prompt,
 )
@@ -72,19 +75,6 @@ from bot.keyboards import (
 from bot.services.media import send_cached_media, send_cached_photo_album
 
 MenuAction = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
-
-UNKNOWN_TEXT_REPLIES = {
-	"ru": "Пожалуйста, воспользуйтесь кнопками меню ниже 👇",
-	"uz": "Iltimos, quyidagi menyu tugmalaridan foydalaning 👇",
-	"uz_cyr": "Илтимос, қуйидаги меню тугмаларидан фойдаланинг 👇",
-}
-
-GROUP_SELECTED_TEXTS = {
-	"ru": "✅ Группа {number}-й колонии.",
-	"uz": "✅ {number}-son koloniya guruhi.",
-	"uz_cyr": "✅ {number}-сон колония гуруҳи.",
-}
-
 
 def _selected_colony_name(context: ContextTypes.DEFAULT_TYPE, language: str) -> str:
 	"""Название выбранной колонии на языке пользователя."""
@@ -329,9 +319,10 @@ async def handle_application_selection(
 	if not query or not query.data:
 		return
 
+	language = user_language(context)
 	image_type = query.data.removeprefix("application:")
 	if image_type not in APPLICATION_IMAGE_PATHS:
-		await query.answer("Неизвестный тип заявления.", show_alert=True)
+		await query.answer(UNKNOWN_ACTION_TEXTS.get(language, UNKNOWN_ACTION_TEXTS["ru"]), show_alert=True)
 		return
 
 	await query.answer()
@@ -339,7 +330,6 @@ async def handle_application_selection(
 	if not chat:
 		return
 
-	language = user_language(context)
 	image_path = APPLICATION_IMAGE_PATHS[image_type].get(
 		language,
 		APPLICATION_IMAGE_PATHS[image_type]["ru"],

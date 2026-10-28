@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
+from bot.app import _post_init
 from bot.config import (
 	SUBSCRIPTION_GROUP_URL,
 	get_lawyer_reviews_chat_id,
@@ -15,14 +16,18 @@ from bot.content.texts import (
 	ADDITIONAL_INFO_BUTTONS,
 	COLONY_PROMPTS,
 	LANGUAGE_BUTTONS,
+	LAWYER_PHOTO_MISSING_TEXTS,
 	LAWYER_REVIEW_SUCCESS_TEXTS,
+	MONEY_TRANSFER_DONE_TEXTS,
 	MONEY_TRANSFER_PROMPT_TEXTS,
 	PHONE_PROMPTS,
 	SUBSCRIPTION_PROMPTS,
 	SUBSCRIPTION_WELCOME_TEXTS,
 	SUPPORT_BUTTON_TEXT,
 	SUPPORT_PROMPTS,
+	START_TEXTS,
 	SUPPORT_SUCCESS_TEXTS,
+	UNKNOWN_TEXT_REPLIES,
 	colony_action_button_texts,
 )
 from bot.database import (
@@ -32,9 +37,6 @@ from bot.database import (
 	save_user_language,
 	save_user_phone_number,
 )
-from bot.handlers.colony.menu import UNKNOWN_TEXT_REPLIES
-from bot.handlers.money_transfer import INSTRUCTIONS_SENT_TEXTS
-from bot.handlers.start import LANGUAGE_PROMPT
 from bot.keyboards import MENU_SECTION_BUTTONS
 from tests.telegram_stub import (
 	ChatSimulator,
@@ -67,7 +69,7 @@ def test_new_user_goes_from_start_to_colony_location():
 			chat = ChatSimulator(application)
 
 			await chat.send("/start")
-			assert RUSSIAN in reply_keyboard_labels(api.message_with_text(LANGUAGE_PROMPT))
+			assert RUSSIAN in reply_keyboard_labels(api.message_with_text(START_TEXTS["ru"]))
 
 			await chat.send(RUSSIAN)
 			phone_prompt = api.message_with_text(PHONE_PROMPTS["ru"]["prompt"])
@@ -183,7 +185,7 @@ def test_start_command_leaves_support_dialog():
 
 			await chat.send(SUPPORT_BUTTON_TEXT["ru"])
 			await chat.send("/start")
-			api.message_with_text(LANGUAGE_PROMPT)
+			api.message_with_text(START_TEXTS["ru"])
 			await chat.send("просто текст")
 
 			assert api.messages(get_support_chat_id()) == []
@@ -223,6 +225,8 @@ def test_lawyer_review_ignores_menu_buttons_and_publishes_real_text():
 
 			await chat.press("lawyer:region:tashkent_city")
 			await chat.press("lawyer:profile:tima")
+			# Фото адвоката пока нет — карточка приходит текстом с переведённой пометкой.
+			assert LAWYER_PHOTO_MISSING_TEXTS["ru"] in api.messages()[-1]["text"]
 			await chat.press("lawyer:write_review:tima")
 
 			# Пользователь передумал и нажал кнопку меню — это не отзыв.
@@ -256,7 +260,7 @@ def test_money_transfer_instructions_are_uploaded_once_then_reused():
 			uploads = [call for call in api.calls if call.method == "sendVideo"]
 			assert len(uploads) == 3
 			assert all("video" not in call.params for call in uploads)  # файлы загружались с диска
-			api.message_with_text(INSTRUCTIONS_SENT_TEXTS["ru"])
+			api.message_with_text(MONEY_TRANSFER_DONE_TEXTS["ru"])
 
 			api.reset()
 			await chat.press("money_transfer:yes")
@@ -297,7 +301,7 @@ def test_user_state_survives_bot_restart():
 		async with running_bot(api) as application:
 			await ChatSimulator(application).send(INFO_SECTION)
 			assert LOCATION in reply_keyboard_labels(api.message_with_text(ACTION_PROMPTS["ru"]))
-			assert not [params for params in api.messages() if params["text"] == LANGUAGE_PROMPT]
+			assert not [params for params in api.messages() if params["text"] == START_TEXTS["ru"]]
 
 	asyncio.run(scenario())
 
@@ -314,5 +318,34 @@ def test_existing_user_with_old_keyboard_is_asked_to_pick_colony_after_update():
 			await ChatSimulator(application).send(INFO_SECTION)  # кнопка со старой русской клавиатуры
 			colony_prompt = api.message_with_text(COLONY_PROMPTS["uz"])
 			assert inline_buttons(colony_prompt)
+
+	asyncio.run(scenario())
+
+
+def test_greeting_uses_telegram_language_for_new_users():
+	async def scenario():
+		api = FakeBotApi()
+		async with running_bot(api) as application:
+			await ChatSimulator(application, language_code="uz").send("/start")
+			api.message_with_text(START_TEXTS["uz"])
+			await ChatSimulator(application, user_id=8, language_code="en").send("/start")
+			api.message_with_text(START_TEXTS["ru"])
+
+	asyncio.run(scenario())
+
+
+def test_bot_commands_are_registered_in_russian_and_uzbek():
+	async def scenario():
+		api = FakeBotApi()
+		async with running_bot(api) as application:
+			await _post_init(application)
+		descriptions = {
+			params.get("language_code"): [command["description"] for command in params["commands"]]
+			for params in api.requests("setMyCommands")
+		}
+		assert descriptions == {
+			None: ["Запустить бота", "Выбрать язык и колонию"],
+			"uz": ["Botni ishga tushirish", "Til va koloniyani tanlash"],
+		}
 
 	asyncio.run(scenario())

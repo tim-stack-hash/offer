@@ -452,3 +452,22 @@ ADDITIONAL_INFO_IMAGE_MISSING_TEXTS = {
 	"uz": "Qo'shimcha ma'lumot rasmlarini topib bo'lmadi.",
 	"uz_cyr": "Қўшимча маълумот расмларини топиб бўлмади.",
 }
+
+# Инструкции по переводу денег отправлены полностью.
+MONEY_TRANSFER_DONE_TEXTS = {
+	"ru": "✅ Готово, все материалы отправлены.",
+	"uz": "✅ Tayyor, barcha materiallar yuborildi.",
+	"uz_cyr": "✅ Тайёр, барча материаллар юборилди.",
+}
+
+LAWYER_NOT_FOUND_TEXTS = {
+	"ru": "Адвокат не найден. Откройте раздел «Адвокаты» заново.",
+	"uz": "Advokat topilmadi. «Advokatlar» bo'limini qaytadan oching.",
+	"uz_cyr": "Адвокат топилмади. «Адвокатлар» бўлимини қайтадан очинг.",
+}
+
+LAWYER_PHOTO_MISSING_TEXTS = {
+	"ru": "Фото адвоката временно недоступно.",
+	"uz": "Advokat surati vaqtincha mavjud emas.",
+	"uz_cyr": "Адвокат сурати вақтинча мавжуд эмас.",
+}

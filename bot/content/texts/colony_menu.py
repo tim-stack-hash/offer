@@ -151,3 +151,11 @@ def colony_location_prompt(language: str, colony_name: str) -> str:
 		language,
 		COLONY_LOCATION_PROMPTS["ru"],
 	).format(colony=colony_name)
+
+
+# Подпись под ссылкой на родительскую группу колонии.
+GROUP_SELECTED_TEXTS = {
+	"ru": "✅ Группа {number}-й колонии.",
+	"uz": "✅ {number}-son koloniya guruhi.",
+	"uz_cyr": "✅ {number}-сон колония гуруҳи.",
+}

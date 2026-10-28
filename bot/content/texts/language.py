@@ -144,3 +144,16 @@ START_TEXTS = {
 	"uz": "👋 Assalomu alaykum!\nUshbu platforma orqali koloniyalar tartibi va mahkumlar uchun ruxsat etilgan buyumlar haqida ma'lumot olishingiz mumkin.\n\n🌐 Tilni tanlang:",
 	"uz_cyr": "👋 Ассалому алайкум!\nУшбу платформа орқали колониялар тартиби ва маҳкумлар учун рухсат этилган буюмлар ҳақида маълумот олишингиз мумкин.\n\n🌐 Тилни танланг:",
 }
+
+# Смена языка из меню и подтверждение выбора.
+CHANGE_LANGUAGE_PROMPTS = {
+	"ru": "🌐 Выберите новый язык:",
+	"uz": "🌐 Yangi tilni tanlang:",
+	"uz_cyr": "🌐 Янги тилни танланг:",
+}
+
+LANGUAGE_SELECTED_TEXTS = {
+	"ru": "🇷🇺 Вы выбрали русский язык.",
+	"uz": "🇺🇿 O'zbek tili tanlandi.",
+	"uz_cyr": "🇺🇿 Ўзбек тили танланди.",
+}

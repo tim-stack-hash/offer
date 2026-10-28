@@ -178,9 +178,17 @@ async def running_bot(api: FakeBotApi):
 class ChatSimulator:
 	"""Пользователь, переписывающийся с ботом в личном чате."""
 
-	def __init__(self, application: Application, user_id: int = 7, first_name: str = "Тест") -> None:
+	def __init__(
+		self,
+		application: Application,
+		user_id: int = 7,
+		first_name: str = "Тест",
+		language_code: str | None = None,
+	) -> None:
 		self.application = application
 		self.user = {"id": user_id, "is_bot": False, "first_name": first_name}
+		if language_code:
+			self.user["language_code"] = language_code
 		self.chat = {"id": user_id, "type": "private", "first_name": first_name}
 		self._ids = itertools.count(1)
 
