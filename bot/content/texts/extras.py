@@ -317,16 +317,11 @@ LAWYER_PROMPTS = {
 	"uz_cyr": "⚖️ Вилоят: {region}\nАдвокатни танланг:",
 }
 
-LAWYER_LIST_EMPTY_TEXTS = {
-	"ru": "В этом регионе пока нет адвокатов.",
-	"uz": "Bu hududda hozircha advokatlar yo'q.",
-	"uz_cyr": "Бу ҳудудда ҳозирча адвокатлар йўқ.",
-}
 
 LAWYER_PROFILE_CAPTIONS = {
-	"ru": "⚖️ Адвокат: {name}\n📍 Регион: {region}\n⭐ Отзывов: {review_count}",
-	"uz": "⚖️ Advokat: {name}\n📍 Hudud: {region}\n⭐ Sharhlar: {review_count}",
-	"uz_cyr": "⚖️ Адвокат: {name}\n📍 Ҳудуд: {region}\n⭐ Фикрлар: {review_count}",
+	"ru": "⚖️ Адвокат: <b>{name}</b>\n📍 Регион: {region}\n⭐ Отзывов: {review_count}",
+	"uz": "⚖️ Advokat: <b>{name}</b>\n📍 Hudud: {region}\n⭐ Sharhlar: {review_count}",
+	"uz_cyr": "⚖️ Адвокат: <b>{name}</b>\n📍 Ҳудуд: {region}\n⭐ Фикрлар: {review_count}",
 }
 
 LAWYER_ACTION_BUTTONS = {
@@ -407,33 +402,29 @@ LAWYER_REVIEW_TOO_LONG_TEXTS = {
 	"uz_cyr": "Фикр жуда узун. 3000 белгидан ошмаган матн юборинг.",
 }
 
-# Текст на случай, если для колонии не заданы координаты/телефон гостиницы.
-HOTEL_INFO_MISSING_TEXTS = {
-	"ru": "Для этой колонии координаты гостиницы и телефон пока не добавлены.",
-	"uz": "Bu koloniya uchun mehmonxona koordinatalari va telefoni hali qo'shilmagan.",
-	"uz_cyr": "Бу колония учун меҳмонхона координаталари ва телефони ҳали қўшилмаган.",
+
+# Карточка гостиницы рядом с колонией: заголовок и подписи полей.
+HOTEL_CARD_TEXTS = {
+	"ru": {
+		"title": "🏨 Гостиница рядом с колонией",
+		"location": "📍 Локация",
+		"location_below": "на карте ниже 👇",
+		"phone": "📞 Телефон",
+	},
+	"uz": {
+		"title": "🏨 Koloniya yaqinidagi mehmonxona",
+		"location": "📍 Lokatsiya",
+		"location_below": "quyidagi xaritada 👇",
+		"phone": "📞 Telefon",
+	},
+	"uz_cyr": {
+		"title": "🏨 Колония яқинидаги меҳмонхона",
+		"location": "📍 Локация",
+		"location_below": "қуйидаги харитада 👇",
+		"phone": "📞 Телефон",
+	},
 }
 
-# Подписи для локации и телефона гостиницы: (локация отправлена, телефон).
-HOTEL_INFO_LABELS = {
-	"ru": ("🏨 Локация гостиницы.", "📞 Телефон гостиницы:"),
-	"uz": ("🏨 Mehmonxona lokatsiyasi yuqorida yuborildi.", "📞 Mehmonxona telefoni:"),
-	"uz_cyr": ("🏨 Меҳмонхона локацияси юқорида юборилди.", "📞 Меҳмонхона телефони:"),
-}
-
-# Текст-заглушка для разделов, которые ещё не реализованы.
-IN_DEVELOPMENT_TEXTS = {
-	"ru": "🚧 Этот раздел пока в разработке. Информация появится позже.",
-	"uz": "🚧 Ushbu bo'lim hozir ishlab chiqilmoqda. Ma'lumot keyinroq qo'shiladi.",
-	"uz_cyr": "🚧 Ушбу бўлим ҳозир ишлаб чиқилмоқда. Маълумот кейинроқ қўшилади.",
-}
-
-# Текст на случай отсутствия файла-образца заявления на диске.
-APPLICATION_FILE_MISSING_TEXTS = {
-	"ru": "Файл образца заявления не найден.",
-	"uz": "Ariza namunasi fayli topilmadi.",
-	"uz_cyr": "Ариза намунаси файли топилмади.",
-}
 
 ADDITIONAL_INFO_COLONY_NUMBERS_TEXTS = {
 	"ru": """Номера колоний:
@@ -447,11 +438,6 @@ Qattiq tartib: № 10, 11, 12, 13, 14, 17, 20.""",
 Қаттиқ тартиб: № 10, 11, 12, 13, 14, 17, 20.""",
 }
 
-ADDITIONAL_INFO_IMAGE_MISSING_TEXTS = {
-	"ru": "Не удалось найти изображения с дополнительной информацией.",
-	"uz": "Qo'shimcha ma'lumot rasmlarini topib bo'lmadi.",
-	"uz_cyr": "Қўшимча маълумот расмларини топиб бўлмади.",
-}
 
 # Инструкции по переводу денег отправлены полностью.
 MONEY_TRANSFER_DONE_TEXTS = {
@@ -467,7 +453,7 @@ LAWYER_NOT_FOUND_TEXTS = {
 }
 
 LAWYER_PHOTO_MISSING_TEXTS = {
-	"ru": "Фото адвоката временно недоступно.",
-	"uz": "Advokat surati vaqtincha mavjud emas.",
-	"uz_cyr": "Адвокат сурати вақтинча мавжуд эмас.",
+	"ru": "📷 Фото: данных нет",
+	"uz": "📷 Surat: ma'lumot yo'q",
+	"uz_cyr": "📷 Сурат: маълумот йўқ",
 }

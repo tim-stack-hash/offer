@@ -25,7 +25,9 @@ from bot.content.texts import (
 	CLOTHING_BUTTONS,
 	COLONY_GROUP_BUTTONS,
 	FEEDBACK_BUTTON_TEXT,
+	KEYBOARD_PLACEHOLDERS,
 	MAIN_GROUP_BUTTONS,
+	MENU_SECTION_BUTTONS,
 	SUPPORT_BUTTON_TEXT,
 	colony_action_button_texts,
 )
@@ -82,13 +84,6 @@ def colony_location_keyboard(language: str, colony_group: str) -> InlineKeyboard
 	return InlineKeyboardMarkup(
 		[[InlineKeyboardButton(button_text, callback_data="colonies:location")]]
 	)
-
-
-MENU_SECTION_BUTTONS = {
-	"ru": ("ℹ️ Информация", "🧰 Услуги", "⬅️ Назад"),
-	"uz": ("ℹ️ Ma'lumot", "🧰 Xizmatlar", "⬅️ Orqaga"),
-	"uz_cyr": ("ℹ️ Маълумот", "🧰 Хизматлар", "⬅️ Орқага"),
-}
 
 
 def colony_location_reply_keyboard(
@@ -148,8 +143,10 @@ def colony_location_reply_keyboard(
 				KeyboardButton(SUPPORT_BUTTON_TEXT.get(language, SUPPORT_BUTTON_TEXT["ru"])),
 			],
 		])
+	placeholders = KEYBOARD_PLACEHOLDERS.get(language, KEYBOARD_PLACEHOLDERS["ru"])
 	return ReplyKeyboardMarkup(
 		menu_rows,
 		resize_keyboard=True,
 		is_persistent=True,
+		input_field_placeholder=placeholders["menu" if section == "root" else section],
 	)

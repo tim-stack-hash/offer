@@ -60,7 +60,7 @@ FEEDBACK_CATEGORY_PATTERN = exact_text_pattern(
 
 def _all_button_labels() -> frozenset[str]:
 	"""Подписи всех reply-кнопок бота на всех языках, а также команды меню."""
-	labels = {"/start", "/menu", *LANGUAGE_LABELS}
+	labels = {"/start", "/menu", "/help", *LANGUAGE_LABELS}
 	for language in SUPPORTED_LANGUAGES:
 		for mapping in (
 			CHANGE_COLONY_BUTTONS,

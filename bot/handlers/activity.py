@@ -106,7 +106,7 @@ async def track_user_action(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 	elif update.message and update.message.text:
 		text = update.message.text.strip()
 		command = text.split(maxsplit=1)[0].split("@", maxsplit=1)[0]
-		action = command if command in ("/start", "/menu") else text
+		action = command if command in ("/start", "/menu", "/help") else text
 		if action not in BUTTON_LABELS:
 			return
 	else:

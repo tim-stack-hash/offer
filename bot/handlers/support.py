@@ -17,6 +17,7 @@ from bot.config import (
 )
 from bot.content.texts import (
 	DELIVERY_ERROR_TEXTS,
+	SUPPORT_BUTTON_TEXT,
 	SUPPORT_CANCELLED_TEXTS,
 	SUPPORT_PROMPTS,
 	SUPPORT_SUCCESS_TEXTS,
@@ -27,11 +28,25 @@ from bot.database import (
 	get_user_phone_number,
 	register_support_message,
 )
-from bot.handlers.common import full_name, return_user_keyboard, telegram_text_length, user_language
+from bot.handlers.common import (
+	HTML,
+	bold,
+	escape,
+	full_name,
+	return_user_keyboard,
+	telegram_text_length,
+	user_language,
+)
 from bot.keyboards import support_cancel_keyboard
 
 SUPPORT_MESSAGE = 1
 LOGGER = logging.getLogger(__name__)
+
+def support_prompt(language: str) -> str:
+	"""Приглашение описать проблему с заголовком раздела (HTML)."""
+	title = bold(SUPPORT_BUTTON_TEXT.get(language, SUPPORT_BUTTON_TEXT["ru"]))
+	return f"{title}\n\n{escape(SUPPORT_PROMPTS.get(language, SUPPORT_PROMPTS['ru']))}"
+
 
 def is_too_long(text: str) -> bool:
 	return telegram_text_length(text) > MAX_USER_MESSAGE_LENGTH
@@ -73,7 +88,8 @@ async def start_support(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
 	language = user_language(context)
 	await message.reply_text(
-		SUPPORT_PROMPTS.get(language, SUPPORT_PROMPTS["ru"]),
+		support_prompt(language),
+		parse_mode=HTML,
 		reply_markup=support_cancel_keyboard(language),
 	)
 	return SUPPORT_MESSAGE
@@ -117,7 +133,8 @@ async def remind_text_only(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 	if message:
 		language = user_language(context)
 		await message.reply_text(
-			SUPPORT_PROMPTS.get(language, SUPPORT_PROMPTS["ru"]),
+			support_prompt(language),
+			parse_mode=HTML,
 			reply_markup=support_cancel_keyboard(language),
 		)
 

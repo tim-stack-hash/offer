@@ -10,7 +10,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 
 from bot.content.texts import COLONY_PROMPTS, PHONE_PROMPTS
 from bot.database import save_user_phone_number
-from bot.handlers.common import user_language
+from bot.handlers.common import HTML, escape, step_header, user_language
 from bot.keyboards import (
 	change_language_keyboard,
 	colony_group_keyboard,
@@ -76,8 +76,10 @@ async def receive_phone_number(
 		texts["received"],
 		reply_markup=change_language_keyboard(language),
 	)
+	colony_prompt = escape(COLONY_PROMPTS.get(language, COLONY_PROMPTS["ru"]))
 	await message.reply_text(
-		COLONY_PROMPTS.get(language, COLONY_PROMPTS["ru"]),
+		f"{step_header(language, 3)}\n{colony_prompt}",
+		parse_mode=HTML,
 		reply_markup=colony_group_keyboard(language),
 	)
 	return ConversationHandler.END

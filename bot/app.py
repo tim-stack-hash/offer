@@ -38,10 +38,12 @@ BOT_COMMANDS: dict[str | None, list[BotCommand]] = {
 	None: [
 		BotCommand("start", "Запустить бота"),
 		BotCommand("menu", "Выбрать язык и колонию"),
+		BotCommand("help", "Как пользоваться ботом"),
 	],
 	"uz": [
 		BotCommand("start", "Botni ishga tushirish"),
 		BotCommand("menu", "Til va koloniyani tanlash"),
+		BotCommand("help", "Botdan foydalanish yo'riqnomasi"),
 	],
 }
 

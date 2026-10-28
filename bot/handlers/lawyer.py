@@ -13,7 +13,6 @@ from bot.config import get_lawyer_reviews_chat_id
 from bot.content.lawyer_regions import LAWYER_REGIONS
 from bot.content.lawyers import LAWYERS
 from bot.content.texts import (
-	LAWYER_LIST_EMPTY_TEXTS,
 	LAWYER_NOT_FOUND_TEXTS,
 	LAWYER_PHOTO_MISSING_TEXTS,
 	LAWYER_PROFILE_CAPTIONS,
@@ -38,7 +37,7 @@ from bot.database import (
 	get_lawyer_reviews,
 	save_lawyer_review,
 )
-from bot.handlers.common import telegram_text_length, user_language
+from bot.handlers.common import HTML, escape, no_data_card, telegram_text_length, user_language
 from bot.handlers.patterns import BUTTON_LABELS
 from bot.keyboards import (
 	lawyer_profile_keyboard,
@@ -87,18 +86,16 @@ async def handle_lawyer_region(
 		if not message:
 			return
 
+		region_name = region_names.get(language, region_names["ru"])
 		lawyer_keyboard = lawyers_by_region_keyboard(item_id)
 		if not lawyer_keyboard.inline_keyboard:
 			await message.edit_text(
-				LAWYER_LIST_EMPTY_TEXTS.get(
-					language,
-					LAWYER_LIST_EMPTY_TEXTS["ru"],
-				),
+				no_data_card(language, f"⚖️ {region_name}"),
+				parse_mode=HTML,
 				reply_markup=InlineKeyboardMarkup([]),
 			)
 			return
 
-		region_name = region_names.get(language, region_names["ru"])
 		prompt = LAWYER_PROMPTS.get(
 			language,
 			LAWYER_PROMPTS["ru"],
@@ -134,8 +131,8 @@ async def handle_lawyer_region(
 			language,
 			LAWYER_PROFILE_CAPTIONS["ru"],
 		).format(
-			name=lawyer["name"],
-			region=language_region_names.get(language, language_region_names["ru"]),
+			name=escape(lawyer["name"]),
+			region=escape(language_region_names.get(language, language_region_names["ru"])),
 			review_count=review_count,
 		)
 		try:
@@ -143,13 +140,15 @@ async def handle_lawyer_region(
 				await message.reply_photo(
 					photo=photo,
 					caption=caption,
+					parse_mode=HTML,
 					reply_markup=lawyer_profile_keyboard(language, item_id),
 				)
 		except OSError:
 			LOGGER.warning("Lawyer profile photo is missing: %s", lawyer["photo_path"])
 			photo_missing = LAWYER_PHOTO_MISSING_TEXTS.get(language, LAWYER_PHOTO_MISSING_TEXTS["ru"])
 			await message.reply_text(
-				f"{caption}\n\n{photo_missing}",
+				f"{caption}\n\n{escape(photo_missing)}",
+				parse_mode=HTML,
 				reply_markup=lawyer_profile_keyboard(language, item_id),
 			)
 		return

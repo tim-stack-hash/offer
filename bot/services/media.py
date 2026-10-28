@@ -13,7 +13,8 @@ from collections.abc import Sequence
 from contextlib import ExitStack
 
 from telegram import Bot, InputMediaPhoto, Message
-from telegram.error import BadRequest
+from telegram.constants import ChatAction
+from telegram.error import BadRequest, TelegramError
 
 from bot.config import media_cache_key
 from bot.database import (
@@ -30,6 +31,14 @@ UPLOAD_TIMEOUTS = {
 	"read_timeout": MEDIA_READ_TIMEOUT_SECONDS,
 	"write_timeout": MEDIA_WRITE_TIMEOUT_SECONDS,
 }
+
+
+async def _show_upload_status(bot: Bot, chat_id: int, is_photo: bool) -> None:
+	"""Показывает пользователю «отправляет фото / видео…», пока файл загружается."""
+	try:
+		await bot.send_chat_action(chat_id, ChatAction.UPLOAD_PHOTO if is_photo else ChatAction.UPLOAD_VIDEO)
+	except TelegramError:
+		LOGGER.debug("Could not show upload status to %s", chat_id, exc_info=True)
 
 
 async def _send(bot: Bot, chat_id: int, media: object, is_photo: bool) -> Message:
@@ -66,6 +75,7 @@ async def send_cached_media(bot: Bot, chat_id: int, media_path: str, is_photo: b
 			LOGGER.warning("Cached Telegram file_id is invalid for %s", media_path)
 			delete_cached_media_file_id(cache_key)
 
+	await _show_upload_status(bot, chat_id, is_photo)
 	with open(media_path, "rb") as media_file:
 		message = await _send(bot, chat_id, media_file, is_photo)
 
@@ -98,6 +108,7 @@ async def send_cached_photo_album(bot: Bot, chat_id: int, photo_paths: Sequence[
 			for cache_key in cache_keys:
 				delete_cached_media_file_id(cache_key)
 
+	await _show_upload_status(bot, chat_id, is_photo=True)
 	with ExitStack() as open_files:
 		media = [
 			InputMediaPhoto(media=open_files.enter_context(open(path, "rb")))

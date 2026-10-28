@@ -13,9 +13,9 @@ CHANGE_COLONY_BUTTONS = {
 
 # Текст приглашения выбрать колонию.
 COLONY_PROMPTS = {
-	"ru": "👇 Выберите колонию:",
-	"uz": "👇 koloniyani tanlang:",
-	"uz_cyr": "👇 колонияни танланг:",
+	"ru": "🏢 Выберите колонию 👇",
+	"uz": "🏢 Koloniyani tanlang 👇",
+	"uz_cyr": "🏢 Колонияни танланг 👇",
 }
 
 # Текст подтверждения выбранной колонии.
@@ -39,11 +39,6 @@ COLONY_GROUP_LINK_PROMPTS = {
 	"uz_cyr": "👇 Колония гуруҳини очиш учун қуйидаги тугмани босинг:",
 }
 
-COLONY_GROUP_MISSING_TEXTS = {
-	"ru": "Ссылка на родительскую группу этой колонии пока не добавлена.",
-	"uz": "Bu koloniyaning ota-onalar guruhi havolasi hali qo'shilmagan.",
-	"uz_cyr": "Бу колониянинг ота-оналар гуруҳи ҳаволаси ҳали қўшилмаган.",
-}
 
 # Подпись кнопки «Основная группа».
 MAIN_GROUP_BUTTONS = {
@@ -91,28 +86,10 @@ APPLICATION_TYPE_BUTTONS = {
 	"uz": ("Uzoq muddatli", "Qisqa muddatli"),
 	"uz_cyr": ("Узоқ муддатли", "Қисқа муддатли"),
 }
-APPLICATION_IMAGE_MISSING_TEXTS = {
-	"ru": "Изображение образца заявления не найдено.",
-	"uz": "Ariza namunasi rasmi topilmadi.",
-	"uz_cyr": "Ариза намунаси расми топилмади.",
-}
 
 # Подпись и телеграм-юзернейм основной (не колониальной) группы.
 MAIN_GROUP = ("💬 Группа проверки денег", "smartdunyopaygroup")
 
-# Текст приглашения выбрать действие в меню колонии.
-ACTION_PROMPTS = {
-	"ru": "👇 Выберите действие:",
-	"uz": "👇 Amalni tanlang:",
-	"uz_cyr": "👇 Амални танланг:",
-}
-
-# Текст на случай отсутствия локации для выбранной колонии.
-LOCATION_MISSING_TEXTS = {
-	"ru": "Для этой колонии локация пока не добавлена.",
-	"uz": "Bu koloniya uchun joylashuv hali qo'shilmagan.",
-	"uz_cyr": "Бу колония учун жойлашув ҳали қўшилмаган.",
-}
 
 # Подпись перед отправкой локации выбранной колонии.
 COLONY_LOCATION_PROMPTS = {
@@ -158,4 +135,37 @@ GROUP_SELECTED_TEXTS = {
 	"ru": "✅ Группа {number}-й колонии.",
 	"uz": "✅ {number}-son koloniya guruhi.",
 	"uz_cyr": "✅ {number}-сон колония гуруҳи.",
+}
+
+# Экраны меню колонии. {colony} — выбранная колония, {info} и {services} — кнопки разделов.
+MENU_SECTION_TEXTS = {
+	"ru": {
+		"root": "🏠 <b>Главное меню</b> · {colony}\n\n{info} — локация, справочник, образцы заявлений, гостиница\n{services} — одежда, такси, адвокаты, перевод денег\n\nВыберите раздел 👇",
+		"info": "{info} · {colony}\n\nВыберите, что вас интересует 👇",
+		"services": "{services}\n\nВыберите услугу 👇",
+	},
+	"uz": {
+		"root": "🏠 <b>Bosh menyu</b> · {colony}\n\n{info} — lokatsiya, ma'lumotnoma, ariza namunalari, mehmonxona\n{services} — kiyimlar, taksi, advokatlar, pul o'tkazish\n\nBo'limni tanlang 👇",
+		"info": "{info} · {colony}\n\nKeraklisini tanlang 👇",
+		"services": "{services}\n\nXizmatni tanlang 👇",
+	},
+	"uz_cyr": {
+		"root": "🏠 <b>Бош меню</b> · {colony}\n\n{info} — локация, маълумотнома, ариза намуналари, меҳмонхона\n{services} — кийимлар, такси, адвокатлар, пул ўтказиш\n\nБўлимни танланг 👇",
+		"info": "{info} · {colony}\n\nКераклисини танланг 👇",
+		"services": "{services}\n\nХизматни танланг 👇",
+	},
+}
+
+# Кнопки разделов меню колонии: «Информация», «Услуги» и возврат на главный экран.
+MENU_SECTION_BUTTONS = {
+	"ru": ("ℹ️ Информация", "🧰 Услуги", "⬅️ Назад"),
+	"uz": ("ℹ️ Ma'lumot", "🧰 Xizmatlar", "⬅️ Orqaga"),
+	"uz_cyr": ("ℹ️ Маълумот", "🧰 Хизматлар", "⬅️ Орқага"),
+}
+
+# Нажата кнопка колонии, которой больше нет в списке.
+COLONY_NOT_FOUND_TEXTS = {
+	"ru": "Колония не найдена.",
+	"uz": "Koloniya topilmadi.",
+	"uz_cyr": "Колония топилмади.",
 }

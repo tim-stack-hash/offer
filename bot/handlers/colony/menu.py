@@ -3,6 +3,7 @@
 Подпись каждой кнопки на любом языке сопоставляется с действием, поэтому кнопки
 продолжают работать, даже если у пользователя осталась клавиатура на другом
 языке. Действиям, которым нужна колония, без неё бот предлагает её выбрать.
+Если по кнопке нет информации, бот отвечает «Данных нет».
 """
 
 from __future__ import annotations
@@ -22,20 +23,11 @@ from bot.config import (
 	COLONY_REGIME_IMAGE_PATHS,
 	SUPPORTED_LANGUAGES,
 )
-from bot.content.colonies import (
-	COLONY_COORDINATES,
-	COLONY_GROUP_LABELS,
-	COLONY_GROUPS,
-	HOTEL_INFO,
-	colony_directory_text,
-)
+from bot.content.colonies import COLONY_COORDINATES, COLONY_GROUPS, HOTEL_INFO, colony_directory_text
 from bot.content.texts import (
-	ACTION_PROMPTS,
 	ADDITIONAL_INFO_BUTTONS,
 	ADDITIONAL_INFO_COLONY_NUMBERS_TEXTS,
-	ADDITIONAL_INFO_IMAGE_MISSING_TEXTS,
 	ADDITIONAL_INFO_LIST_TEXTS,
-	APPLICATION_IMAGE_MISSING_TEXTS,
 	APPLICATION_TYPE_PROMPTS,
 	CHANGE_COLONY_BUTTONS,
 	CLOTHING_BUTTONS,
@@ -43,16 +35,13 @@ from bot.content.texts import (
 	COLONY_DIRECTORY_BUTTONS,
 	COLONY_GROUP_BUTTONS,
 	COLONY_GROUP_LINK_PROMPTS,
-	COLONY_GROUP_MISSING_TEXTS,
 	COLONY_LOCATION_BUTTONS,
 	COLONY_PROMPTS,
 	GROUP_SELECTED_TEXTS,
-	HOTEL_INFO_LABELS,
-	HOTEL_INFO_MISSING_TEXTS,
-	IN_DEVELOPMENT_TEXTS,
-	LOCATION_MISSING_TEXTS,
+	HOTEL_CARD_TEXTS,
 	MAIN_GROUP_BUTTONS,
 	MAIN_GROUP_LINK_PROMPTS,
+	NO_DATA_TEXTS,
 	PHONE_PROMPTS,
 	UNKNOWN_ACTION_TEXTS,
 	UNKNOWN_TEXT_REPLIES,
@@ -60,7 +49,18 @@ from bot.content.texts import (
 	colony_location_prompt,
 )
 from bot.handlers.clothing import handle_clothing_button
-from bot.handlers.common import return_user_keyboard, user_language
+from bot.handlers.common import (
+	HTML,
+	bold,
+	escape,
+	menu_screen,
+	no_data_card,
+	no_data_text,
+	return_user_keyboard,
+	selected_colony_name,
+	step_header,
+	user_language,
+)
 from bot.handlers.lawyer import handle_lawyer_button, handle_lawyer_review_text
 from bot.handlers.money_transfer import handle_money_transfer_button
 from bot.keyboards import (
@@ -68,18 +68,12 @@ from bot.keyboards import (
 	application_type_keyboard,
 	colony_group_keyboard,
 	colony_group_link_keyboard,
-	colony_location_reply_keyboard,
 	contact_request_keyboard,
 	main_group_link_keyboard,
 )
 from bot.services.media import send_cached_media, send_cached_photo_album
 
 MenuAction = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
-
-def _selected_colony_name(context: ContextTypes.DEFAULT_TYPE, language: str) -> str:
-	"""Название выбранной колонии на языке пользователя."""
-	labels = COLONY_GROUP_LABELS.get(language, COLONY_GROUP_LABELS["ru"])
-	return labels[COLONY_GROUPS.index(context.user_data["colony"])]
 
 
 async def _ask_colony(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -97,8 +91,10 @@ async def _resume_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE)
 		return
 
 	language = user_language(context)
+	phone_prompt = escape(PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])["prompt"])
 	await update.message.reply_text(
-		PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])["prompt"],
+		f"{step_header(language, 2)}\n{phone_prompt}",
+		parse_mode=HTML,
 		reply_markup=contact_request_keyboard(language),
 	)
 
@@ -116,44 +112,46 @@ async def _reply_unknown_text(update: Update, context: ContextTypes.DEFAULT_TYPE
 	)
 
 
+async def _reply_no_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+	"""Кнопка раздела, по которому пока нет информации: название раздела и «Данных нет»."""
+	language = user_language(context)
+	await update.message.reply_text(no_data_card(language, update.message.text), parse_mode=HTML)
+
+
 async def _show_section(update: Update, context: ContextTypes.DEFAULT_TYPE, section: str) -> None:
 	"""Переключает меню колонии на раздел «Информация», «Услуги» или на главный экран."""
-	language = user_language(context)
 	context.user_data["menu_section"] = section
-	await update.message.reply_text(
-		ACTION_PROMPTS.get(language, ACTION_PROMPTS["ru"]),
-		reply_markup=colony_location_reply_keyboard(language, context.user_data["colony"], section),
-	)
+	text, keyboard = menu_screen(context, section)
+	await update.message.reply_text(text, parse_mode=HTML, reply_markup=keyboard)
 
 
 async def _send_hotel_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-	"""Локация и телефон гостиницы рядом с колонией — то, что заполнено."""
+	"""Карточка гостиницы рядом с колонией; чего нет — помечено «данных нет»."""
 	message = update.message
 	language = user_language(context)
+	card = HOTEL_CARD_TEXTS.get(language, HOTEL_CARD_TEXTS["ru"])
 	coordinates, phone = HOTEL_INFO.get(context.user_data["colony"], ((), ""))
 	phone = phone.strip()
 	if not coordinates and not phone:
-		await message.reply_text(HOTEL_INFO_MISSING_TEXTS.get(language, HOTEL_INFO_MISSING_TEXTS["ru"]))
+		await message.reply_text(no_data_card(language, card["title"]), parse_mode=HTML)
 		return
 
-	location_label, phone_label = HOTEL_INFO_LABELS.get(language, HOTEL_INFO_LABELS["ru"])
-	reply_lines = []
+	missing = NO_DATA_TEXTS.get(language, NO_DATA_TEXTS["ru"]).lower()
+	lines = [
+		bold(card["title"]),
+		"",
+		f"{escape(card['location'])}: {escape(card['location_below'] if coordinates else missing)}",
+		f"{escape(card['phone'])}: {escape(phone or missing)}",
+	]
+	await message.reply_text("\n".join(lines), parse_mode=HTML)
 	if coordinates:
 		await message.reply_location(latitude=coordinates[0], longitude=coordinates[1])
-		reply_lines.append(location_label)
-	if phone:
-		reply_lines.append(f"{phone_label} {phone}")
-	await message.reply_text("\n".join(reply_lines))
 
 
 async def _send_additional_info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 	"""Правила посещения, список разрешённого, номера колоний и памятки картинками."""
 	message = update.message
 	language = user_language(context)
-	missing_text = ADDITIONAL_INFO_IMAGE_MISSING_TEXTS.get(
-		language,
-		ADDITIONAL_INFO_IMAGE_MISSING_TEXTS["ru"],
-	)
 
 	intro_image_path = ADDITIONAL_INFO_INTRO_IMAGE_PATHS.get(
 		language,
@@ -162,7 +160,7 @@ async def _send_additional_info(update: Update, context: ContextTypes.DEFAULT_TY
 	try:
 		await send_cached_media(context.bot, message.chat_id, intro_image_path, is_photo=True)
 	except OSError:
-		await message.reply_text(missing_text)
+		await message.reply_text(no_data_text(language))
 
 	await message.reply_text(ADDITIONAL_INFO_LIST_TEXTS.get(language, ADDITIONAL_INFO_LIST_TEXTS["ru"]))
 	await message.reply_text(
@@ -180,9 +178,9 @@ async def _send_additional_info(update: Update, context: ContextTypes.DEFAULT_TY
 		elif existing_paths:
 			await send_cached_media(context.bot, message.chat_id, existing_paths[0], is_photo=True)
 		else:
-			await message.reply_text(missing_text)
+			await message.reply_text(no_data_text(language))
 	except OSError:
-		await message.reply_text(missing_text)
+		await message.reply_text(no_data_text(language))
 
 
 async def _send_colony_group_link(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -191,14 +189,15 @@ async def _send_colony_group_link(update: Update, context: ContextTypes.DEFAULT_
 	language = user_language(context)
 	group_keyboard = colony_group_link_keyboard(language, context.user_data["colony"])
 	if not group_keyboard:
-		await message.reply_text(COLONY_GROUP_MISSING_TEXTS.get(language, COLONY_GROUP_MISSING_TEXTS["ru"]))
+		title = COLONY_GROUP_BUTTONS.get(language, COLONY_GROUP_BUTTONS["ru"])
+		await message.reply_text(no_data_card(language, title), parse_mode=HTML)
 		return
 
 	await message.reply_text(
 		COLONY_GROUP_LINK_PROMPTS.get(language, COLONY_GROUP_LINK_PROMPTS["ru"]),
 		reply_markup=group_keyboard,
 	)
-	colony_number = re.search(r"\d+", _selected_colony_name(context, language))
+	colony_number = re.search(r"\d+", selected_colony_name(context, language))
 	if colony_number:
 		await message.reply_text(
 			GROUP_SELECTED_TEXTS.get(language, GROUP_SELECTED_TEXTS["ru"]).format(
@@ -220,10 +219,11 @@ async def _send_colony_location(update: Update, context: ContextTypes.DEFAULT_TY
 	language = user_language(context)
 	coordinates = COLONY_COORDINATES.get(context.user_data["colony"])
 	if not coordinates:
-		await message.reply_text(LOCATION_MISSING_TEXTS.get(language, LOCATION_MISSING_TEXTS["ru"]))
+		title = colony_action_button_texts(language)[0]
+		await message.reply_text(no_data_card(language, title), parse_mode=HTML)
 		return
 
-	colony_name = _selected_colony_name(context, language).removeprefix("📍").strip()
+	colony_name = selected_colony_name(context, language).removeprefix("📍").strip()
 	await message.reply_text(colony_location_prompt(language, colony_name))
 	await message.reply_location(latitude=coordinates[0], longitude=coordinates[1])
 
@@ -239,11 +239,6 @@ async def _ask_application_type(update: Update, context: ContextTypes.DEFAULT_TY
 		APPLICATION_TYPE_PROMPTS.get(language, APPLICATION_TYPE_PROMPTS["ru"]),
 		reply_markup=application_type_keyboard(language),
 	)
-
-
-async def _reply_in_development(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-	language = user_language(context)
-	await update.message.reply_text(IN_DEVELOPMENT_TEXTS.get(language, IN_DEVELOPMENT_TEXTS["ru"]))
 
 
 def _build_menu_actions() -> dict[str, tuple[MenuAction, bool]]:
@@ -276,7 +271,7 @@ def _build_menu_actions() -> dict[str, tuple[MenuAction, bool]]:
 		bind([directory, COLONY_DIRECTORY_BUTTONS[language]], _send_colony_directory, needs_colony=True)
 
 		bind([application, COLONY_APPLICATION_BUTTONS[language]], _ask_application_type, needs_colony=False)
-		bind([shop, taxi], _reply_in_development, needs_colony=False)
+		bind([shop, taxi], _reply_no_data, needs_colony=False)
 		bind([lawyers], handle_lawyer_button, needs_colony=False)
 		bind([money_transfer], handle_money_transfer_button, needs_colony=False)
 		bind([additional_info], _send_additional_info, needs_colony=False)
@@ -337,7 +332,4 @@ async def handle_application_selection(
 	try:
 		await send_cached_media(context.bot, chat.id, image_path, is_photo=True)
 	except OSError:
-		await context.bot.send_message(
-			chat_id=chat.id,
-			text=APPLICATION_IMAGE_MISSING_TEXTS.get(language, APPLICATION_IMAGE_MISSING_TEXTS["ru"]),
-		)
+		await context.bot.send_message(chat_id=chat.id, text=no_data_text(language))

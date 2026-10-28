@@ -16,7 +16,7 @@ from bot.content.texts import (
 	MONEY_TRANSFER_SENDING_TEXTS,
 	TRANSFER_MONEY_PROMPTS,
 )
-from bot.handlers.common import user_language
+from bot.handlers.common import no_data_text, user_language
 from bot.keyboards import money_transfer_apps_keyboard, money_transfer_confirmation_keyboard
 from bot.services.media import send_cached_media
 
@@ -62,11 +62,13 @@ async def _send_instruction_media(bot: Bot, chat_id: int, language: str) -> None
 		except (TelegramError, OSError):
 			LOGGER.exception("Failed to send money-transfer media %s to user %s", media_path, chat_id)
 
-	if sent_any:
-		await bot.send_message(
-			chat_id=chat_id,
-			text=MONEY_TRANSFER_DONE_TEXTS.get(language, MONEY_TRANSFER_DONE_TEXTS["ru"]),
-		)
+	if not sent_any:
+		await bot.send_message(chat_id=chat_id, text=no_data_text(language))
+		return
+	await bot.send_message(
+		chat_id=chat_id,
+		text=MONEY_TRANSFER_DONE_TEXTS.get(language, MONEY_TRANSFER_DONE_TEXTS["ru"]),
+	)
 
 
 async def handle_money_transfer_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

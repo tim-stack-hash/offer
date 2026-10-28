@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import re
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any
@@ -29,6 +30,32 @@ SUBSCRIPTION_GROUP = {
 }
 
 
+# Теги, которые Telegram принимает в режиме HTML.
+TELEGRAM_HTML_TAGS = {"b", "strong", "i", "em", "u", "ins", "s", "strike", "del", "a", "code", "pre", "blockquote"}
+HTML_TAG = re.compile(r"<(/?)([a-z-]+)(?:\s[^<>]*)?>")
+UNESCAPED_AMPERSAND = re.compile(r"&(?!(?:amp|lt|gt|quot|#\d+|#x[0-9a-fA-F]+);)")
+
+
+def html_problem(text: str) -> str | None:
+	"""Проверяет разметку так же строго, как Telegram: теги, их парность и экранирование."""
+	open_tags: list[str] = []
+	for match in re.finditer(r"<[^<>]*>|[<>]", text):
+		token = match.group()
+		tag = HTML_TAG.fullmatch(token)
+		if not tag or tag.group(2) not in TELEGRAM_HTML_TAGS:
+			return f"неэкранированный символ или неизвестный тег {token!r}"
+		closing, name = tag.groups()
+		if not closing:
+			open_tags.append(name)
+		elif not open_tags or open_tags.pop() != name:
+			return f"лишний закрывающий тег {token!r}"
+	if open_tags:
+		return f"незакрытые теги {open_tags}"
+	if UNESCAPED_AMPERSAND.search(text):
+		return "неэкранированный &"
+	return None
+
+
 @dataclass
 class ApiCall:
 	method: str
@@ -41,6 +68,7 @@ class FakeBotApi(BaseRequest):
 
 	def __init__(self) -> None:
 		self.calls: list[ApiCall] = []
+		self.formatting_errors: list[str] = []
 		self.member_status = "member"
 		self._ids = itertools.count(1000)
 
@@ -66,9 +94,23 @@ class FakeBotApi(BaseRequest):
 	) -> tuple[int, bytes]:
 		api_method = url.rsplit("/", 1)[-1]
 		params = request_data.parameters if request_data else {}
+		self._check_formatting(api_method, params)
 		result = self._result(api_method, params)
 		self.calls.append(ApiCall(api_method, params, result))
 		return 200, json.dumps({"ok": True, "result": result}).encode()
+
+	def _check_formatting(self, method: str, params: dict[str, Any]) -> None:
+		"""Telegram отклоняет сообщения с битой HTML-разметкой — ловим это в тестах."""
+		text = params.get("text") or params.get("caption")
+		if not isinstance(text, str):
+			return
+		if params.get("parse_mode") != "HTML":
+			if HTML_TAG.search(text):
+				self.formatting_errors.append(f"{method}: теги без parse_mode=HTML: {text[:80]!r}")
+			return
+		problem = html_problem(text)
+		if problem:
+			self.formatting_errors.append(f"{method}: {problem}: {text[:80]!r}")
 
 	def _message(self, params: dict[str, Any], **content: Any) -> dict[str, Any]:
 		chat_id = params.get("chat_id", 0)
@@ -129,6 +171,13 @@ class FakeBotApi(BaseRequest):
 			if chat_id is None or params.get("chat_id") == chat_id
 		]
 
+	def message_containing(self, fragment: str) -> dict[str, Any]:
+		"""Последнее отправленное сообщение, в тексте которого есть этот фрагмент."""
+		matches = [params for params in self.messages() if fragment in params.get("text", "")]
+		sent = [params.get("text") for params in self.messages()]
+		assert matches, f"Бот не отправил сообщение с {fragment!r}. Отправлено: {sent}"
+		return matches[-1]
+
 	def message_with_text(self, text: str) -> dict[str, Any]:
 		"""Последнее отправленное сообщение с этим текстом."""
 		matches = [params for params in self.messages() if params.get("text") == text]
@@ -173,6 +222,7 @@ async def running_bot(api: FakeBotApi):
 		await application.stop()
 		await application.shutdown()
 	assert not errors, f"Необработанные ошибки в обработчиках: {errors!r}"
+	assert not api.formatting_errors, f"Ошибки разметки: {api.formatting_errors}"
 
 
 class ChatSimulator:

@@ -5,24 +5,21 @@ from __future__ import annotations
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler
 
-from bot.content.colonies import COLONY_GROUPS, COLONY_GROUP_LABELS
+from bot.content.colonies import COLONY_GROUPS
 from bot.content.texts import (
-	ACTION_PROMPTS,
 	CHANGE_LANGUAGE_PROMPTS,
 	COLONY_PROMPTS,
-	COLONY_SELECTED_TEXTS,
 	LANGUAGE_SELECTED_TEXTS,
 	PHONE_PROMPTS,
 )
 from bot.database import register_user, save_user_language
-from bot.handlers.common import user_language
+from bot.handlers.common import HTML, escape, menu_screen, step_header, user_language
 from bot.handlers.patterns import language_by_label
 from bot.handlers.phone import PHONE_REQUIRED
 from bot.handlers.subscription import is_group_member, prompt_group_subscription
 from bot.keyboards import (
 	change_language_keyboard,
 	colony_group_keyboard,
-	colony_location_reply_keyboard,
 	contact_request_keyboard,
 	language_selection_keyboard,
 )
@@ -61,36 +58,28 @@ async def select_language(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 		await prompt_group_subscription(update, context)
 		return ConversationHandler.END
 
-	await message.reply_text(
-		LANGUAGE_SELECTED_TEXTS[language],
-		reply_markup=change_language_keyboard(language),
-	)
-
-	colony_group = context.user_data.get("colony")
-	if changing_language and colony_group in COLONY_GROUPS:
-		# Пользователь менял язык внутри меню колонии — возвращаем его в то же меню.
-		colony_name = COLONY_GROUP_LABELS[language][COLONY_GROUPS.index(colony_group)]
-		context.user_data["colony_name"] = colony_name
-		await message.reply_text(f"{COLONY_SELECTED_TEXTS[language]}\n{colony_name}")
-		await message.reply_text(
-			ACTION_PROMPTS.get(language, ACTION_PROMPTS["ru"]),
-			reply_markup=colony_location_reply_keyboard(
-				language,
-				colony_group,
-				context.user_data.get("menu_section", "root"),
-			),
-		)
+	selected_text = escape(LANGUAGE_SELECTED_TEXTS[language])
+	if changing_language and context.user_data.get("colony") in COLONY_GROUPS:
+		# Язык меняли внутри меню колонии — возвращаем пользователя в тот же раздел.
+		menu_text, keyboard = menu_screen(context, context.user_data.get("menu_section", "root"))
+		await message.reply_text(f"{selected_text}\n\n{menu_text}", parse_mode=HTML, reply_markup=keyboard)
 		return ConversationHandler.END
 
 	if context.user_data.get("phone_number"):
+		await message.reply_text(
+			LANGUAGE_SELECTED_TEXTS[language],
+			reply_markup=change_language_keyboard(language),
+		)
 		await message.reply_text(
 			COLONY_PROMPTS.get(language, COLONY_PROMPTS["ru"]),
 			reply_markup=colony_group_keyboard(language),
 		)
 		return ConversationHandler.END
 
+	phone_prompt = escape(PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])["prompt"])
 	await message.reply_text(
-		PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])["prompt"],
+		f"{selected_text}\n\n{step_header(language, 2)}\n{phone_prompt}",
+		parse_mode=HTML,
 		reply_markup=contact_request_keyboard(language),
 	)
 	return PHONE_REQUIRED

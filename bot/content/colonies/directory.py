@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from bot.content.colonies.directory_data import COLONY_DIRECTORY_EXTRA_CONTACTS
+from bot.content.texts.common import NO_DATA_TEXTS
 
 # Заголовок справочника (колл-центр и официальные контакты Департамента) на каждом языке.
 COLONY_DIRECTORY_HEADERS = {
@@ -47,6 +48,7 @@ COLONY_DIRECTORY_CONTACTS = {
 	"SmartJIEK13": ("13-сон колония контактлари", "13-son koloniya kontaktlari",  "Контакты 13-й колонии"),
 	"SmartJIEK14": ("14-сон колония контактлари", "14-son koloniya kontaktlari",  "Контакты 14-й колонии"),
 	"SmartJIEK17": ("17-сон колония контактлари", "17-son koloniya kontaktlari",  "Контакты 17-й колонии"),
+	"SmartJIEK20": ("20-сон колония контактлари", "20-son koloniya kontaktlari",  "Контакты 20-й колонии"),
 	"SmartJIEK21": ("21-сон колония контактлари", "21-son koloniya kontaktlari",  "Контакты 21-й колонии"),
 	"SmartJIEK22": ("22-сон колония контактлари", "22-son koloniya kontaktlari",  "Контакты 22-й колонии"),
 	"SmartJIEK23":    ("23-сон МУИК контактлари",     "23-son MUIK kontaktlari",  "Контакты 23-го МУИК"),
@@ -63,10 +65,13 @@ def colony_directory_text(language: str, colony_group: str | None) -> str:
 	if colony_group in COLONY_DIRECTORY_CONTACTS:
 		colony_title = COLONY_DIRECTORY_CONTACTS[colony_group][language_index]
 		text += f"\n\n{colony_title}:"
-		for contact in COLONY_DIRECTORY_EXTRA_CONTACTS.get(colony_group, ()):
+		contacts = COLONY_DIRECTORY_EXTRA_CONTACTS.get(colony_group, ())
+		for contact in contacts:
 			label = contact[language_index]
 			values = ", ".join(contact[3:])
 			text += f"\n{label}: {values}"
+		if not contacts:
+			text += f"\n📭 {NO_DATA_TEXTS.get(language, NO_DATA_TEXTS['ru'])}"
 	call_center_labels = {
 		"ru": "Кол-центр SMART DUNYO:",
 		"uz": "SMART DUNYO PAY kol-center:",

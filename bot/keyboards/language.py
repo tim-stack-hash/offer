@@ -8,9 +8,16 @@ from bot.content.texts import (
 	CHANGE_LANGUAGE_BUTTONS,
 	CONTACT_BUTTON_TEXT,
 	FEEDBACK_CATEGORY_BUTTONS,
+	KEYBOARD_PLACEHOLDERS,
 	LANGUAGE_BUTTONS,
+	LANGUAGE_PLACEHOLDER,
 	SUPPORT_CANCEL_BUTTONS,
 )
+
+
+def _placeholder(language: str, kind: str) -> str:
+	"""Подсказка в поле ввода под клавиатурой."""
+	return KEYBOARD_PLACEHOLDERS.get(language, KEYBOARD_PLACEHOLDERS["ru"])[kind]
 
 
 def language_selection_keyboard() -> ReplyKeyboardMarkup:
@@ -20,6 +27,7 @@ def language_selection_keyboard() -> ReplyKeyboardMarkup:
 		[buttons[row_start:row_start + 2] for row_start in range(0, len(buttons), 2)],
 		resize_keyboard=True,
 		is_persistent=True,
+		input_field_placeholder=LANGUAGE_PLACEHOLDER,
 	)
 
 
@@ -35,6 +43,7 @@ def contact_request_keyboard(language: str) -> ReplyKeyboardMarkup:
 		],
 		resize_keyboard=True,
 		is_persistent=True,
+		input_field_placeholder=_placeholder(language, "phone"),
 	)
 
 
@@ -53,6 +62,7 @@ def support_cancel_keyboard(language: str) -> ReplyKeyboardMarkup:
 		[[KeyboardButton(SUPPORT_CANCEL_BUTTONS.get(language, SUPPORT_CANCEL_BUTTONS["ru"]))]],
 		resize_keyboard=True,
 		is_persistent=True,
+		input_field_placeholder=_placeholder(language, "message"),
 	)
 
 
@@ -69,4 +79,5 @@ def feedback_category_keyboard(language: str) -> ReplyKeyboardMarkup:
 		],
 		resize_keyboard=True,
 		is_persistent=True,
+		input_field_placeholder=_placeholder(language, "choice"),
 	)

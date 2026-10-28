@@ -87,9 +87,9 @@ COLONY_GROUP_LABELS = {
 		"📍 1-son JIEK",   "📍 2-son JIEK", "📍 3-son JIEK",
 		"📍 4-son JIEK",   "📍 5-son JIEK", "📍 6-son JIEK",
 		"📍 7-son JIEK",   "📍 10-son JIEK", "📍 11-son JIEK",
-		"📍 12-son JIEK", "📍 13-son JIEK)", "📍 14-son JIEK",
+		"📍 12-son JIEK", "📍 13-son JIEK", "📍 14-son JIEK",
 		"📍 17-son JIEK", "📍 20-son JIEK",  "📍 21-son JIEK",
-		"📍 22-son JIEK", "📍 23-son MUIK) 🏥",
+		"📍 22-son JIEK", "📍 23-son MUIK 🏥",
 	),
 	"uz_cyr": (
 		"📍 1-сон ЖИЭК", "📍 2-сон ЖИЭК", "📍 3-сон ЖИЭК",

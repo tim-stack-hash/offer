@@ -32,6 +32,7 @@ from bot.handlers.colony import (
 	handle_colony_selection,
 	handle_menu_text,
 )
+from bot.handlers.help import show_help
 from bot.handlers.feedback import (
 	FEEDBACK_CATEGORY,
 	FEEDBACK_MESSAGE,
@@ -170,6 +171,7 @@ def register_handlers(application: Application) -> None:
 
 	application.add_handler(CommandHandler("start", start, filters=PRIVATE))
 	application.add_handler(CommandHandler("menu", handle_menu, filters=PRIVATE))
+	application.add_handler(CommandHandler("help", show_help, filters=PRIVATE))
 	application.add_handler(CommandHandler("admin", admin_panel))
 	application.add_handler(CommandHandler("admin2", admin_activity_panel))
 

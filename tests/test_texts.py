@@ -30,3 +30,15 @@ def test_translations_are_not_empty():
 		if isinstance(text, str) and not text.strip()
 	]
 	assert empty == []
+
+
+def test_colony_names_have_no_stray_symbols():
+	from bot.content.colonies import COLONY_GROUP_LABELS
+
+	broken = [
+		label
+		for labels in COLONY_GROUP_LABELS.values()
+		for label in labels
+		if label != label.strip() or label.count("(") != label.count(")")
+	]
+	assert broken == []

@@ -17,7 +17,7 @@ from bot.content.texts import (
 	SUBSCRIPTION_WELCOME_TEXTS,
 )
 from bot.database import get_user_language, get_user_phone_number
-from bot.handlers.common import user_language
+from bot.handlers.common import HTML, escape, step_header, user_language
 from bot.handlers.patterns import LANGUAGE_LABELS
 from bot.handlers.start import start
 from bot.keyboards import colony_group_keyboard, contact_request_keyboard
@@ -62,7 +62,7 @@ def is_language_selection_update(update: Update) -> bool:
 
 	text = message.text.strip()
 	command = text.split(maxsplit=1)[0].split("@", 1)[0]
-	return command in ("/start", "/menu") or text in LANGUAGE_LABELS
+	return command in ("/start", "/menu", "/help") or text in LANGUAGE_LABELS
 
 
 def subscription_keyboard(language: str) -> InlineKeyboardMarkup:
@@ -94,10 +94,12 @@ async def prompt_group_subscription(
 		return
 
 	language = user_language(context)
-	await message.reply_text(
-		SUBSCRIPTION_PROMPTS.get(language, SUBSCRIPTION_PROMPTS["ru"]),
-		reply_markup=subscription_keyboard(language),
+	join_text, check_text = SUBSCRIPTION_BUTTONS.get(language, SUBSCRIPTION_BUTTONS["ru"])
+	prompt = SUBSCRIPTION_PROMPTS.get(language, SUBSCRIPTION_PROMPTS["ru"]).format(
+		join=escape(join_text),
+		check=escape(check_text),
 	)
+	await message.reply_text(prompt, parse_mode=HTML, reply_markup=subscription_keyboard(language))
 
 
 async def _welcome_new_member(
@@ -110,14 +112,11 @@ async def _welcome_new_member(
 	user_data["language"] = language
 	user_data["subscription_welcomed"] = True
 
-	await context.bot.send_message(
-		chat_id=user_id,
-		text=SUBSCRIPTION_WELCOME_TEXTS.get(language, SUBSCRIPTION_WELCOME_TEXTS["ru"]),
-	)
-
+	welcome = SUBSCRIPTION_WELCOME_TEXTS.get(language, SUBSCRIPTION_WELCOME_TEXTS["ru"])
 	phone_number = user_data.get("phone_number") or get_user_phone_number(user_id)
 	if phone_number:
 		user_data["phone_number"] = phone_number
+		await context.bot.send_message(chat_id=user_id, text=welcome)
 		await context.bot.send_message(
 			chat_id=user_id,
 			text=COLONY_PROMPTS.get(language, COLONY_PROMPTS["ru"]),
@@ -125,9 +124,11 @@ async def _welcome_new_member(
 		)
 		return
 
+	phone_prompt = escape(PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])["prompt"])
 	await context.bot.send_message(
 		chat_id=user_id,
-		text=PHONE_PROMPTS.get(language, PHONE_PROMPTS["ru"])["prompt"],
+		text=f"{escape(welcome)}\n\n{step_header(language, 2)}\n{phone_prompt}",
+		parse_mode=HTML,
 		reply_markup=contact_request_keyboard(language),
 	)
 

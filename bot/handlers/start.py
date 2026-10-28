@@ -8,6 +8,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 from bot.config import SUPPORTED_LANGUAGES
 from bot.content.texts import START_TEXTS
 from bot.database import register_user
+from bot.handlers.common import HTML, step_header
 from bot.keyboards import language_selection_keyboard
 
 # Временные состояния сценариев, которые сбрасываются при перезапуске меню.
@@ -57,10 +58,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 	if user:
 		register_user(user.id, user.username, user.first_name, user.last_name)
 	_reset_transient_state(context)
-	await message.reply_text(
-		START_TEXTS[greeting_language(update, context)],
-		reply_markup=language_selection_keyboard(),
-	)
+	language = greeting_language(update, context)
+	text = START_TEXTS[language]
+	if not context.user_data.get("phone_number"):
+		# Новый пользователь: показываем, что настройка займёт всего три шага.
+		text = f"{step_header(language, 1)}\n{text}"
+	await message.reply_text(text, parse_mode=HTML, reply_markup=language_selection_keyboard())
 	return ConversationHandler.END
 
 
