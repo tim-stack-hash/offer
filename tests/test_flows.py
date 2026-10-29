@@ -18,6 +18,8 @@ from bot.content.texts import (
 	LANGUAGE_BUTTONS,
 	LAWYER_PHOTO_MISSING_TEXTS,
 	LAWYER_REVIEW_SUCCESS_TEXTS,
+	MAIN_GROUP_BUTTONS,
+	MAIN_GROUP_LINK_PROMPTS,
 	MENU_SECTION_TEXTS,
 	MONEY_TRANSFER_DONE_TEXTS,
 	MONEY_TRANSFER_PROMPT_TEXTS,
@@ -405,6 +407,28 @@ def test_help_explains_sections_with_real_button_names():
 			help_message = api.message_containing(HELP_TEXTS["ru"]["title"])
 			assert f"<b>{SUPPORT_BUTTON_TEXT['ru']}</b>" in help_message["text"]
 			assert INFO_SECTION in reply_keyboard_labels(help_message)
+
+	asyncio.run(scenario())
+
+
+def test_main_group_button_works_in_every_language():
+	"""Подпись кнопки на любом языке должна открывать ссылку на основную группу."""
+	async def scenario():
+		api = FakeBotApi()
+		async with running_bot(api) as application:
+			for index, language in enumerate(("ru", "uz", "uz_cyr")):
+				chat = ChatSimulator(application, user_id=7 + index)
+				await chat.send("/start")
+				await chat.send(dict((code, label) for label, code in LANGUAGE_BUTTONS)[language])
+				await chat.share_contact()
+				await chat.press("colonies:select:0")
+
+				api.reset()
+				await chat.send(MAIN_GROUP_BUTTONS[language])
+				message = api.messages()[-1]
+				assert message["text"] == MAIN_GROUP_LINK_PROMPTS[language]
+				(button,) = inline_buttons(message)
+				assert button["url"] == SUBSCRIPTION_GROUP_URL
 
 	asyncio.run(scenario())
 
