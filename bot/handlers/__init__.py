@@ -1,6 +1,7 @@
 """Регистрация всех обработчиков бота в правильном порядке.
 
 Группы обработки:
+	-4  блокировка обновлений из посторонних групп;
 	-3  загрузка языка и телефона пользователя из базы;
 	-2  проверка подписки на обязательную группу (останавливает обработку);
 	-1  учёт нажатий кнопок;
@@ -26,6 +27,7 @@ from telegram.ext import (
 from bot.config import get_feedback_chat_id, get_support_chat_id
 from bot.handlers.activity import track_user_action
 from bot.handlers.admin import admin_activity_panel, admin_panel, handle_admin_callback
+from bot.handlers.chat_guard import block_group_interaction
 from bot.handlers.clothing import handle_clothing_region
 from bot.handlers.colony import (
 	handle_application_selection,
@@ -150,6 +152,7 @@ def _onboarding_conversation() -> ConversationHandler:
 
 def register_handlers(application: Application) -> None:
 	"""Подключает все обработчики к приложению."""
+	application.add_handler(TypeHandler(Update, block_group_interaction), group=-4)
 	application.add_handler(TypeHandler(Update, load_user_context), group=-3)
 	application.add_handler(TypeHandler(Update, require_group_subscription), group=-2)
 	application.add_handler(TypeHandler(Update, track_user_action), group=-1)
