@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 LAWYER_REGIONS = {
-	"tashkent_city": {
-		"ru": "Город Ташкент",
-		"uz": "Toshkent shahri",
-		"uz_cyr": "Тошкент шаҳри",
-	},
+	# "tashkent_city": {
+	# 	"ru": "Город Ташкент",
+	# 	"uz": "Toshkent shahri",
+	# 	"uz_cyr": "Тошкент шаҳри",
+	# },
 	# "karakalpakstan": {
 	# 	"ru": "Республика Каракалпакстан",
 	# 	"uz": "Qoraqalpog'iston Respublikasi",
